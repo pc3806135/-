@@ -124,34 +124,41 @@
         <div class="card">
             <h3>电缆参数 <span style="font-size:0.7rem;color:var(--text2)">(工业与民用配电设计手册 第四版)</span></h3>
             <div class="form-row">
-                <div class="form-group"><label>导体材料</label><select id="lv_conductor"><option value="copper">铜芯</option><option value="aluminum">铝芯</option></select></div>
-                <div class="form-group"><label>绝缘类型</label><select id="lv_insulation"><option value="xlpe">XLPE (交联聚乙烯)</option><option value="pvc">PVC (聚氯乙烯)</option></select></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>敷设方式</label><select id="lv_method"><option value="bridge">桥架敷设</option><option value="air">空气中明敷</option><option value="conduit">穿管敷设</option><option value="buried">直埋敷设</option></select></div>
+                <div class="form-group">
+                    <label>电缆型号</label>
+                    <select id="lv_model" onchange="lvModelChange()">
+                        <option value="YJV">YJV - XLPE绝缘 PVC护套 (铜)</option>
+                        <option value="YJLV">YJLV - XLPE绝缘 PVC护套 (铝)</option>
+                        <option value="ZR-YJV">ZR-YJV - 阻燃型 XLPE (铜)</option>
+                        <option value="NH-YJV">NH-YJV - 耐火型 XLPE (铜)</option>
+                        <option value="WDZ-YJY">WDZ-YJY - 低烟无卤 XLPE (铜)</option>
+                        <option value="YJV22">YJV22 - XLPE绝缘 钢带铠装 (铜)</option>
+                        <option value="YJLV22">YJLV22 - XLPE绝缘 钢带铠装 (铝)</option>
+                        <option value="VV">VV - PVC绝缘 PVC护套 (铜)</option>
+                        <option value="VLV">VLV - PVC绝缘 PVC护套 (铝)</option>
+                        <option value="VV22">VV22 - PVC绝缘 钢带铠装 (铜)</option>
+                        <option value="VLV22">VLV22 - PVC绝缘 钢带铠装 (铝)</option>
+                    </select>
+                </div>
                 <div class="form-group">
                     <label>电缆芯数</label>
                     <select id="lv_cores">
+                        <option value="1">单芯 (1P)</option>
                         <option value="3">三芯 (3P)</option>
                         <option value="4" selected>四芯 (3P+N)</option>
                         <option value="5">五芯 (3P+N+PE)</option>
                     </select>
                 </div>
             </div>
+            <div class="form-group"><label>敷设方式</label><select id="lv_method"><option value="bridge">桥架敷设</option><option value="air">空气中明敷</option><option value="conduit">穿管敷设</option><option value="buried">直埋敷设</option></select></div>
             <div class="form-row-3">
                 <div class="form-group"><label>环境温度 (°C)</label><input id="lv_temp" type="number" value="35"></div>
                 <div class="form-group"><label>并列回路数</label><input id="lv_circuits" type="number" value="2" min="1"></div>
                 <div class="form-group"><label>距离 (m)</label><input id="lv_length" type="number" value="120"></div>
             </div>
             <div class="form-group"><label>回路类型</label><select id="lv_ctype"><option value="power">动力 (5%)</option><option value="lighting">照明 (3%)</option><option value="mixed">混合 (4%)</option><option value="emergency">应急 (10%)</option></select></div>
-        </div>
-
-        <div class="card">
-            <h3>短路参数</h3>
-            <div class="form-row">
-                <div class="form-group"><label>短路电流 I"k3 (kA)</label><input id="lv_ik" type="number" value="25" step="any"></div>
-                <div class="form-group"><label>持续时间 t (s)</label><input id="lv_t" type="number" value="0.2" step="0.01"></div>
-            </div>
+            <input type="hidden" id="lv_conductor" value="copper">
+            <input type="hidden" id="lv_insulation" value="xlpe">
         </div>
 
         <button class="btn btn-primary" onclick="calcLV()">低压综合计算</button>
@@ -235,6 +242,33 @@ function switchSection(s) {
     }
 }
 
+// 电缆型号 → 导体+绝缘 映射
+const CABLE_MODELS = {
+    'YJV':     {conductor:'copper', insulation:'xlpe', armor:false},
+    'YJLV':    {conductor:'aluminum', insulation:'xlpe', armor:false},
+    'ZR-YJV':  {conductor:'copper', insulation:'xlpe', armor:false},
+    'NH-YJV':  {conductor:'copper', insulation:'xlpe', armor:false},
+    'WDZ-YJY': {conductor:'copper', insulation:'xlpe', armor:false},
+    'YJV22':   {conductor:'copper', insulation:'xlpe', armor:true},
+    'YJLV22':  {conductor:'aluminum', insulation:'xlpe', armor:true},
+    'VV':      {conductor:'copper', insulation:'pvc', armor:false},
+    'VLV':     {conductor:'aluminum', insulation:'pvc', armor:false},
+    'VV22':    {conductor:'copper', insulation:'pvc', armor:true},
+    'VLV22':   {conductor:'aluminum', insulation:'pvc', armor:true},
+};
+
+function lvModelChange() {
+    const m = CABLE_MODELS[$('lv_model').value];
+    if (m) {
+        $('lv_conductor').value = m.conductor;
+        $('lv_insulation').value = m.insulation;
+        // 铠装型号自动建议直埋
+        if (m.armor && $('lv_method').value === 'bridge') {
+            // 不强制改，给用户提示即可
+        }
+    }
+}
+
 // ============================================================
 // 低压载流量 (GB 50217)
 // ============================================================
@@ -264,7 +298,8 @@ function getLVAmpacity(conductor, insulation, method, cores) {
     }
     if (conductor === 'aluminum') base = al(base);
     // 多芯修正 (工业与民用配电设计手册 表9.4)
-    const coreF = {3:1.0, 4:0.88, 5:0.82};
+    // 单芯: 散热好, 载流量略高; 多芯: 相互加热, 需折减
+    const coreF = {1:1.05, 3:1.0, 4:0.88, 5:0.82};
     const cf = coreF[cores] || 1.0;
     const r = {};
     for (const [k,v] of Object.entries(base)) r[k] = Math.round(v*cf*10)/10;
@@ -328,13 +363,17 @@ function peakCurrent(ik,kp) { return Math.sqrt(2)*kp*ik; }
 // 低压综合计算
 // ============================================================
 function calcLV() {
+    const model = $('lv_model').value;
+    const cm = CABLE_MODELS[model] || {conductor:'copper', insulation:'xlpe'};
+    const conductor = cm.conductor;
+    const insulation = cm.insulation;
+
     const pe=fv('lv_pe'), kx=fv('lv_kx'), cosphi=fv('lv_cosphi');
     const [ph,vstr]=$('lv_phase').value.split('-');
     const is3=ph==='3', V=parseFloat(vstr);
-    const conductor=$('lv_conductor').value, insulation=$('lv_insulation').value;
     const method=$('lv_method').value, cores=parseInt($('lv_cores').value);
     const temp=fv('lv_temp'), circuits=fv('lv_circuits'), length=fv('lv_length');
-    const ctype=$('lv_ctype').value, ik=fv('lv_ik'), tSec=fv('lv_t');
+    const ctype=$('lv_ctype').value;
 
     const pjs=pe*kx;
     let ijs, labelPhase;
@@ -354,7 +393,7 @@ function calcLV() {
     let cs=0,cRaw=0,cOk=false,cFail='';
     const secs=Object.keys(ampTable).map(Number).sort((a,b)=>a-b);
     for(const s of secs){if(ampTable[s]>=required){cs=s;cRaw=ampTable[s];cOk=true;break;}}
-    if(!cOk){const ms=secs[secs.length-1];cFail='最大截面 '+ms+'mm2 仍不满足 ('+required.toFixed(1)+'A)';}
+    if(!cOk){const ms=secs[secs.length-1];cFail='最大截面 '+ms+'mm2 不满足 ('+required.toFixed(1)+'A)';}
 
     // VD
     let vdDU=0,vdDUp=0,vdR0=0,vdX0=0,vdPass=false;
@@ -368,23 +407,44 @@ function calcLV() {
         vdPass=vdDUp<=lim;
     }
 
-    // SC
-    let smin=0,scPass=false,scK=0;
-    if(cOk){scK=KV[conductor+'_'+insulation];smin=(ik*1000)*Math.sqrt(tSec)/scK;scPass=cs>=smin;}
-
     // Render
-    const coreLabel={3:'三芯 (3P)',4:'四芯 (3P+N)',5:'五芯 (3P+N+PE)'}[cores];
+    const coreLabel = {1:'单芯', 3:'三芯 (3P)', 4:'四芯 (3P+N)', 5:'五芯 (3P+N+PE)'}[cores] || (cores+'芯');
     const lim={lighting:3,power:5,mixed:4,emergency:10}[ctype]||5;
+    const methodLabel={air:'空气中明敷',bridge:'桥架敷设',conduit:'穿管敷设',buried:'直埋敷设'}[method];
+
     let h='';
-    h+=buildCard('1. 电流计算',[['相别/电压',labelPhase],['功率因数',cosphi.toFixed(2)],['P_js / Q_js / S_js',pjs.toFixed(1)+' kW / '+qjs.toFixed(1)+' kvar / '+sjs.toFixed(1)+' kVA'],['计算电流 I_js','<span class="highlight">'+ijs.toFixed(2)+' A</span>']]);
+    h+=buildCard('1. 电流计算',[
+        ['相别/电压', labelPhase],
+        ['功率因数', cosphi.toFixed(2)],
+        ['P_js / Q_js / S_js', pjs.toFixed(1)+' kW / '+qjs.toFixed(1)+' kvar / '+sjs.toFixed(1)+' kVA'],
+        ['计算电流 I_js', '<span class="highlight">'+ijs.toFixed(2)+' A</span>']
+    ]);
     if(cOk){
-        h+=buildCard('2. 电缆选型 ('+coreLabel+')',[['导体/绝缘',(conductor==='copper'?'铜芯':'铝芯')+' / '+insulation.toUpperCase()],['敷设方式',{air:'空气中明敷',bridge:'桥架敷设',conduit:'穿管敷设',buried:'直埋敷设'}[method]],['温度Kt / 敷设Km / 并列Kg',kT.toFixed(3)+' / '+kM.toFixed(3)+' / '+kG.toFixed(3)],['综合K / 要求载流量',kTotal.toFixed(3)+' / '+required.toFixed(1)+' A'],['推荐截面','<span class="highlight">'+cs+' mm2</span> (修正后: '+Math.round(cRaw*kTotal)+' A)']]);
-    }else{h+=buildCard('2. 电缆选型',[['结果','<span class="fail">失败</span>'],['原因',cFail]]);}
-    if(cOk){h+=buildCard('3. 压降 (限值 '+lim+'%)',[['R0/X0',vdR0.toFixed(4)+' / '+vdX0.toFixed(4)+' ohm/km'],['dU / dU%',vdDU.toFixed(2)+' V / <span class="'+(vdPass?'pass':'fail')+'">'+vdDUp.toFixed(2)+'%</span>'],['判定',badge(vdPass)]]);}
-    if(cOk){h+=buildCard('4. 短路热稳定',[['I\"k3 / t',ik+' kA / '+tSec+' s | K='+scK],['S_min','<span class="'+(scPass?'pass':'fail')+'">'+smin.toFixed(1)+' mm2</span>'],['已选截面',cs+' mm2 '+badge(scPass)]]);}
-    const allOk=cOk&&vdPass&&scPass;
+        const modelName = $('lv_model').value;
+        h+=buildCard('2. 电缆选型 ('+modelName+' '+coreLabel+')',[
+            ['电缆型号', modelName],
+            ['芯数/敷设', coreLabel+' / '+methodLabel],
+            ['温度Kt / 敷设Km / 并列Kg', kT.toFixed(3)+' / '+kM.toFixed(3)+' / '+kG.toFixed(3)],
+            ['综合K / 要求载流量', kTotal.toFixed(3)+' / '+required.toFixed(1)+' A'],
+            ['推荐截面', '<span class="highlight">'+cs+' mm2</span> (修正后: '+Math.round(cRaw*kTotal)+' A)'],
+        ]);
+    } else {
+        h+=buildCard('2. 电缆选型',[['结果','<span class="fail">失败</span>'],['原因',cFail]]);
+    }
+    if(cOk){
+        h+=buildCard('3. 压降校验 (限值 '+lim+'%)',[
+            ['R0 / X0', vdR0.toFixed(4)+' / '+vdX0.toFixed(4)+' ohm/km'],
+            ['dU / dU%', vdDU.toFixed(2)+' V / <span class="'+(vdPass?'pass':'fail')+'">'+vdDUp.toFixed(2)+'%</span>'],
+            ['判定', badge(vdPass)]
+        ]);
+    }
+
+    const allOk = cOk && vdPass;
     h+='<div class="verdict '+(allOk?'all-pass':'has-fail')+'"><div class="icon">'+(allOk?'PASS':'FAIL')+'</div><div class="msg">'+(allOk?'全部校验通过':'存在不合格项')+'</div>';
-    if(allOk&&cOk){const n=Math.max(Math.round(cs/2),cores>=4?16:10);h+='<div class="cable-tag">'+(conductor==='copper'?'ZR-YJV':'ZR-YJLV')+'-0.6/1kV '+cs+'mm2 x '+cores+'芯</div>';}
+    if(allOk&&cOk){
+        const modelName=$('lv_model').value;
+        h+='<div class="cable-tag">'+modelName+'-0.6/1kV '+cs+'mm2 x '+cores+'芯</div>';
+    }
     h+='</div>';
     $('result-lv').innerHTML=h;$('result-lv').classList.remove('hidden');$('result-lv').scrollIntoView({behavior:'smooth',block:'center'});
 }
