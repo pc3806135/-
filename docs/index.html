@@ -92,6 +92,7 @@
 <div class="header">
     <h1>电气设计计算工具</h1>
     <span>GB 50217 / GB 50054 | 工业与民用配电设计手册</span>
+    <span style="display:block;font-size:0.65rem;opacity:0.7;margin-top:2px;">design by pc</span>
 </div>
 
 <div class="content">
@@ -123,40 +124,67 @@
 
         <div class="card">
             <h3>电缆参数 <span style="font-size:0.7rem;color:var(--text2)">(工业与民用配电设计手册 第四版)</span></h3>
+            <div class="form-group">
+                <label>电缆型号</label>
+                <select id="lv_model" onchange="lvModelChange()">
+                    <option value="YJV">YJV - 交联聚乙烯绝缘聚氯乙烯护套 (铜)</option>
+                    <option value="YJLV">YJLV - 交联聚乙烯绝缘聚氯乙烯护套 (铝)</option>
+                    <option value="ZR-YJV">ZR-YJV - 阻燃交联聚乙烯绝缘 (铜)</option>
+                    <option value="NH-YJV">NH-YJV - 耐火交联聚乙烯绝缘 (铜)</option>
+                    <option value="WDZ-YJY">WDZ-YJY - 低烟无卤交联聚乙烯绝缘 (铜)</option>
+                    <option value="YJV22">YJV22 - 交联聚乙烯绝缘钢带铠装 (铜)</option>
+                    <option value="YJLV22">YJLV22 - 交联聚乙烯绝缘钢带铠装 (铝)</option>
+                    <option value="VV">VV - 聚氯乙烯绝缘聚氯乙烯护套 (铜)</option>
+                    <option value="VLV">VLV - 聚氯乙烯绝缘聚氯乙烯护套 (铝)</option>
+                    <option value="VV22">VV22 - 聚氯乙烯绝缘钢带铠装 (铜)</option>
+                    <option value="VLV22">VLV22 - 聚氯乙烯绝缘钢带铠装 (铝)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>敷设方式</label>
+                <select id="lv_method">
+                    <option value="bridge">桥架敷设 (梯架/托盘)</option>
+                    <option value="air">空气中明敷</option>
+                    <option value="conduit">穿管敷设 (钢管/塑料管)</option>
+                    <option value="buried">直埋敷设 (土壤中)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>环境温度</label>
+                <select id="lv_temp">
+                    <option value="20">20°C</option>
+                    <option value="25">25°C</option>
+                    <option value="30">30°C</option>
+                    <option value="35" selected>35°C</option>
+                    <option value="40">40°C</option>
+                    <option value="45">45°C</option>
+                    <option value="50">50°C</option>
+                </select>
+            </div>
             <div class="form-row">
-                <div class="form-group">
-                    <label>电缆型号</label>
-                    <select id="lv_model" onchange="lvModelChange()">
-                        <option value="YJV">YJV - XLPE绝缘 PVC护套 (铜)</option>
-                        <option value="YJLV">YJLV - XLPE绝缘 PVC护套 (铝)</option>
-                        <option value="ZR-YJV">ZR-YJV - 阻燃型 XLPE (铜)</option>
-                        <option value="NH-YJV">NH-YJV - 耐火型 XLPE (铜)</option>
-                        <option value="WDZ-YJY">WDZ-YJY - 低烟无卤 XLPE (铜)</option>
-                        <option value="YJV22">YJV22 - XLPE绝缘 钢带铠装 (铜)</option>
-                        <option value="YJLV22">YJLV22 - XLPE绝缘 钢带铠装 (铝)</option>
-                        <option value="VV">VV - PVC绝缘 PVC护套 (铜)</option>
-                        <option value="VLV">VLV - PVC绝缘 PVC护套 (铝)</option>
-                        <option value="VV22">VV22 - PVC绝缘 钢带铠装 (铜)</option>
-                        <option value="VLV22">VLV22 - PVC绝缘 钢带铠装 (铝)</option>
-                    </select>
-                </div>
                 <div class="form-group">
                     <label>电缆芯数</label>
                     <select id="lv_cores">
-                        <option value="1">单芯 (1P)</option>
-                        <option value="3">三芯 (3P)</option>
-                        <option value="4" selected>四芯 (3P+N)</option>
-                        <option value="5">五芯 (3P+N+PE)</option>
+                        <option value="1">单芯</option>
+                        <option value="3">三芯</option>
+                        <option value="4" selected>四芯</option>
+                        <option value="5">五芯</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>排列方式</label>
+                    <select id="lv_layout">
+                        <option value="trefoil">品字形排列</option>
+                        <option value="flat" selected>一字形排列</option>
+                        <option value="single">单根敷设</option>
                     </select>
                 </div>
             </div>
-            <div class="form-group"><label>敷设方式</label><select id="lv_method"><option value="bridge">桥架敷设</option><option value="air">空气中明敷</option><option value="conduit">穿管敷设</option><option value="buried">直埋敷设</option></select></div>
             <div class="form-row-3">
-                <div class="form-group"><label>环境温度 (°C)</label><input id="lv_temp" type="number" value="35"></div>
                 <div class="form-group"><label>并列回路数</label><input id="lv_circuits" type="number" value="2" min="1"></div>
-                <div class="form-group"><label>距离 (m)</label><input id="lv_length" type="number" value="120"></div>
+                <div class="form-group"><label>电缆长度 (m)</label><input id="lv_length" type="number" value="120"></div>
+                <div class="form-group"><label>回路类型</label><select id="lv_ctype"><option value="power">动力 (5%)</option><option value="lighting">照明 (3%)</option><option value="mixed">混合 (4%)</option><option value="emergency">应急 (10%)</option></select></div>
             </div>
-            <div class="form-group"><label>回路类型</label><select id="lv_ctype"><option value="power">动力 (5%)</option><option value="lighting">照明 (3%)</option><option value="mixed">混合 (4%)</option><option value="emergency">应急 (10%)</option></select></div>
             <input type="hidden" id="lv_conductor" value="copper">
             <input type="hidden" id="lv_insulation" value="xlpe">
         </div>
@@ -372,8 +400,9 @@ function calcLV() {
     const [ph,vstr]=$('lv_phase').value.split('-');
     const is3=ph==='3', V=parseFloat(vstr);
     const method=$('lv_method').value, cores=parseInt($('lv_cores').value);
-    const temp=fv('lv_temp'), circuits=fv('lv_circuits'), length=fv('lv_length');
-    const ctype=$('lv_ctype').value;
+    const temp=fv('lv_temp'), circuits=fv('lv_circuits');
+    const length=fv('lv_length'), ctype=$('lv_ctype').value;
+    const layout=$('lv_layout').value;
 
     const pjs=pe*kx;
     let ijs, labelPhase;
@@ -389,7 +418,9 @@ function calcLV() {
     // Cable
     const ampTable=getLVAmpacity(conductor,insulation,method,cores);
     const kT=getTemp(insulation,method,temp), kM=getMf(method), kG=getGrp(method,circuits);
-    const kTotal=kT*kM*kG, required=ijs/kTotal;
+    // 排列方式修正 (一字形排列中间导体散热差)
+    const kLayout = {trefoil:1.0, flat:0.93, single:1.0}[layout]||1.0;
+    const kTotal=kT*kM*kG*kLayout, required=ijs/kTotal;
     let cs=0,cRaw=0,cOk=false,cFail='';
     const secs=Object.keys(ampTable).map(Number).sort((a,b)=>a-b);
     for(const s of secs){if(ampTable[s]>=required){cs=s;cRaw=ampTable[s];cOk=true;break;}}
@@ -421,10 +452,11 @@ function calcLV() {
     ]);
     if(cOk){
         const modelName = $('lv_model').value;
+        const layoutLabel = {trefoil:'品字形', flat:'一字形', single:'单根'}[layout]||layout;
         h+=buildCard('2. 电缆选型 ('+modelName+' '+coreLabel+')',[
             ['电缆型号', modelName],
-            ['芯数/敷设', coreLabel+' / '+methodLabel],
-            ['温度Kt / 敷设Km / 并列Kg', kT.toFixed(3)+' / '+kM.toFixed(3)+' / '+kG.toFixed(3)],
+            ['芯数 / 敷设 / 排列', coreLabel+' / '+methodLabel+' / '+layoutLabel],
+            ['修正系数 Kt/Km/Kg/Kl', kT.toFixed(3)+' / '+kM.toFixed(3)+' / '+kG.toFixed(3)+' / '+kLayout.toFixed(2)],
             ['综合K / 要求载流量', kTotal.toFixed(3)+' / '+required.toFixed(1)+' A'],
             ['推荐截面', '<span class="highlight">'+cs+' mm2</span> (修正后: '+Math.round(cRaw*kTotal)+' A)'],
         ]);
