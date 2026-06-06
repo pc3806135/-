@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 计算书输出文件 (每次运行生成)
+电气计算书_*.xlsx
+电气计算书_*.pdf
+
+# Test artifacts
+.pytest_cache/
+htmlcov/
+.coverage
