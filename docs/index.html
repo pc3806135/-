@@ -164,11 +164,11 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>电缆芯数</label>
-                    <select id="lv_cores">
+                    <select id="lv_cores" onchange="lvCoresChange()">
                         <option value="1">单芯</option>
-                        <option value="3">三芯</option>
-                        <option value="4" selected>四芯</option>
-                        <option value="5">五芯</option>
+                        <option value="3">三芯 (3P)</option>
+                        <option value="32" selected>3+2 芯 (3P+N+PE)</option>
+                        <option value="41">4+1 芯 (3P+N+PE)</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -290,11 +290,10 @@ function lvModelChange() {
     if (m) {
         $('lv_conductor').value = m.conductor;
         $('lv_insulation').value = m.insulation;
-        // 铠装型号自动建议直埋
-        if (m.armor && $('lv_method').value === 'bridge') {
-            // 不强制改，给用户提示即可
-        }
     }
+}
+function lvCoresChange() {
+    // 3+2/4+1 仅用于三相系统提示
 }
 
 // ============================================================
@@ -326,8 +325,8 @@ function getLVAmpacity(conductor, insulation, method, cores) {
     }
     if (conductor === 'aluminum') base = al(base);
     // 多芯修正 (工业与民用配电设计手册 表9.4)
-    // 单芯: 散热好, 载流量略高; 多芯: 相互加热, 需折减
-    const coreF = {1:1.05, 3:1.0, 4:0.88, 5:0.82};
+    // 单芯: 散热好; 3+2/4+1: 辅助芯发热需折减
+    const coreF = {1:1.05, 3:1.0, 32:0.90, 41:0.85};
     const cf = coreF[cores] || 1.0;
     const r = {};
     for (const [k,v] of Object.entries(base)) r[k] = Math.round(v*cf*10)/10;
@@ -420,26 +419,45 @@ function calcLV() {
     const kT=getTemp(insulation,method,temp), kM=getMf(method), kG=getGrp(method,circuits);
     // 排列方式修正 (一字形排列中间导体散热差)
     const kLayout = {trefoil:1.0, flat:0.93, single:1.0}[layout]||1.0;
-    const kTotal=kT*kM*kG*kLayout, required=ijs/kTotal;
-    let cs=0,cRaw=0,cOk=false,cFail='';
-    const secs=Object.keys(ampTable).map(Number).sort((a,b)=>a-b);
-    for(const s of secs){if(ampTable[s]>=required){cs=s;cRaw=ampTable[s];cOk=true;break;}}
-    if(!cOk){const ms=secs[secs.length-1];cFail='最大截面 '+ms+'mm2 不满足 ('+required.toFixed(1)+'A)';}
+    const kTotal=kT*kM*kG*kLayout;
 
-    // VD
+    // 多根并联自动匹配
+    // 并联降容系数: 间距0.1m→0.90, 间距0.2m→0.93, 紧靠→0.85
+    const kParallel = 0.85; // 保守取紧靠敷设
+    const secs=Object.keys(ampTable).map(Number).sort((a,b)=>a-b);
+    const maxSection=secs[secs.length-1];
+    const maxSingle=ampTable[maxSection]*kTotal;
+
+    let nParallel=0, cs=0, cRaw=0, cOk=false, cFail='';
+    // 尝试 1~6 根并联
+    for (let n=1; n<=6; n++) {
+        const reqPerCable = ijs / (n * (n===1?1:kParallel));
+        // 查找满足要求的截面
+        for(const s of secs) {
+            if (ampTable[s]*kTotal >= reqPerCable) {
+                nParallel=n; cs=s; cRaw=ampTable[s]; cOk=true;
+                break;
+            }
+        }
+        if (cOk) break;
+    }
+    if(!cOk){cFail='最大截面 '+maxSection+'mm2 x6根并联仍不满足';}
+
+    // VD (并联时每根电流=Ijs/n, 阻抗=R/n)
     let vdDU=0,vdDUp=0,vdR0=0,vdX0=0,vdPass=false;
     if(cOk){
         const [r0,x0]=zGet(conductor==='copper'?ZLC:ZLA, cs);
-        vdR0=r0;vdX0=x0;
+        const r0p=r0/nParallel, x0p=x0/nParallel;  // 并联等效阻抗
+        vdR0=r0p;vdX0=x0p;
         const sp=Math.sin(Math.acos(cosphi));
-        vdDU=is3? (Math.sqrt(3)*ijs*length*(r0*cosphi+x0*sp)/1000) : (2*ijs*length*(r0*cosphi+x0*sp)/1000);
+        vdDU=is3? (Math.sqrt(3)*ijs*length*(r0p*cosphi+x0p*sp)/1000) : (2*ijs*length*(r0p*cosphi+x0p*sp)/1000);
         vdDUp=is3? (vdDU/V*100) : (vdDU/V*100);
         const lim={lighting:3,power:5,mixed:4,emergency:10}[ctype]||5;
         vdPass=vdDUp<=lim;
     }
 
     // Render
-    const coreLabel = {1:'单芯', 3:'三芯 (3P)', 4:'四芯 (3P+N)', 5:'五芯 (3P+N+PE)'}[cores] || (cores+'芯');
+    const coreLabel = {1:'单芯', 3:'三芯 (3P)', 32:'3+2芯 (3P+N+PE)', 41:'4+1芯 (3P+N+PE)'}[cores] || (cores+'芯');
     const lim={lighting:3,power:5,mixed:4,emergency:10}[ctype]||5;
     const methodLabel={air:'空气中明敷',bridge:'桥架敷设',conduit:'穿管敷设',buried:'直埋敷设'}[method];
 
@@ -453,12 +471,16 @@ function calcLV() {
     if(cOk){
         const modelName = $('lv_model').value;
         const layoutLabel = {trefoil:'品字形', flat:'一字形', single:'单根'}[layout]||layout;
+        const parallelInfo = nParallel>1 ? ('<span class="highlight">'+nParallel+'根并联</span>, 每根 '+cs+' mm2') : cs+' mm2';
+        const perCableAmp = Math.round(cRaw*kTotal);
+        const totalAmp = perCableAmp * nParallel * (nParallel===1?1:kParallel);
         h+=buildCard('2. 电缆选型 ('+modelName+' '+coreLabel+')',[
             ['电缆型号', modelName],
             ['芯数 / 敷设 / 排列', coreLabel+' / '+methodLabel+' / '+layoutLabel],
             ['修正系数 Kt/Km/Kg/Kl', kT.toFixed(3)+' / '+kM.toFixed(3)+' / '+kG.toFixed(3)+' / '+kLayout.toFixed(2)],
-            ['综合K / 要求载流量', kTotal.toFixed(3)+' / '+required.toFixed(1)+' A'],
-            ['推荐截面', '<span class="highlight">'+cs+' mm2</span> (修正后: '+Math.round(cRaw*kTotal)+' A)'],
+            ['综合K / 并联降容Kp', kTotal.toFixed(3)+' / '+(nParallel>1?kParallel.toFixed(2):'—')],
+            ['推荐方案', '<span class="highlight">'+parallelInfo+'</span>'],
+            ['单根载流量 / 总载流量', perCableAmp+' A / <span class="highlight">'+Math.round(totalAmp)+' A</span>'],
         ]);
     } else {
         h+=buildCard('2. 电缆选型',[['结果','<span class="fail">失败</span>'],['原因',cFail]]);
@@ -475,7 +497,8 @@ function calcLV() {
     h+='<div class="verdict '+(allOk?'all-pass':'has-fail')+'"><div class="icon">'+(allOk?'PASS':'FAIL')+'</div><div class="msg">'+(allOk?'全部校验通过':'存在不合格项')+'</div>';
     if(allOk&&cOk){
         const modelName=$('lv_model').value;
-        h+='<div class="cable-tag">'+modelName+'-0.6/1kV '+cs+'mm2 x '+cores+'芯</div>';
+        const parallelStr = nParallel>1 ? (nParallel+'x') : '';
+        h+='<div class="cable-tag">'+modelName+'-0.6/1kV '+parallelStr+cs+'mm2 ('+coreLabel+')</div>';
     }
     h+='</div>';
     $('result-lv').innerHTML=h;$('result-lv').classList.remove('hidden');$('result-lv').scrollIntoView({behavior:'smooth',block:'center'});
