@@ -501,7 +501,103 @@ function calcLV() {
         h+='<div class="cable-tag">'+modelName+'-0.6/1kV '+parallelStr+cs+'mm2 ('+coreLabel+')</div>';
     }
     h+='</div>';
+
+    // Export button
+    h+='<button class="btn btn-primary" style="margin-top:10px;background:#0d904f" onclick="exportWordLV()">导出 Word 计算书</button>';
+
     $('result-lv').innerHTML=h;$('result-lv').classList.remove('hidden');$('result-lv').scrollIntoView({behavior:'smooth',block:'center'});
+
+    // 保存结果供导出使用
+    window._lvResult = {pe,kx,cosphi,labelPhase,pjs,qjs,sjs,ijs,
+        modelName:$('lv_model').value, coreLabel, methodLabel,
+        kT,kM,kG,kLayout,kTotal,nParallel,cs,cRaw,perCableAmp:Math.round(cRaw*kTotal),
+        totalAmp:Math.round(cRaw*kTotal*nParallel*(nParallel===1?1:kParallel)),
+        kParallel, vdR0,vdX0,vdDU,vdDUp,vdPass,lim,allOk,
+        conductor,insulation,cores,length,V,is3};
+}
+
+// ============================================================
+// Word 导出
+// ============================================================
+function exportWordLV() {
+    const r = window._lvResult;
+    if (!r) return alert('请先完成低压综合计算');
+
+    const now = new Date().toLocaleString('zh-CN');
+    const statusBadge = r.allOk ? '合格' : '不合格';
+    const statusColor = r.allOk ? '#0d904f' : '#d93025';
+    const parallelStr = r.nParallel>1 ? (r.nParallel+'根并联, 每根 ') : '';
+    const parallelLabel = r.nParallel>1 ? (r.nParallel+'x') : '';
+    const kpInfo = r.nParallel>1 ? ('<tr><td>并联降容系数 Kp</td><td>'+r.kParallel.toFixed(2)+'</td></tr>') : '';
+
+    const html = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>电气设计计算书</title>
+<style>
+body{font-family:'微软雅黑',SimSun,sans-serif;max-width:700px;margin:0 auto;padding:20px;color:#333;}
+h1{text-align:center;font-size:20px;border-bottom:2px solid #1a73e8;padding-bottom:10px;}
+h2{font-size:15px;color:#1a73e8;border-left:4px solid #1a73e8;padding-left:8px;margin-top:20px;}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px;}
+td{padding:8px;border:1px solid #ddd;}
+td:first-child{background:#f5f7fa;width:35%;font-weight:bold;}
+.info{font-size:12px;color:#888;text-align:center;margin-bottom:15px;}
+.verdict{text-align:center;font-size:16px;font-weight:bold;padding:12px;margin:15px 0;background:#${r.allOk?'e6f4ea':'fce8e6'};color:${statusColor};}
+.model{text-align:center;font-size:14px;font-weight:bold;color:#1a73e8;padding:10px;background:#e8f0fe;margin:10px 0;}
+.signature{margin-top:40px;text-align:right;font-size:13px;}
+.signature div{display:inline-block;margin-left:40px;}
+</style></head><body>
+<h1>电气设计计算书</h1>
+<div class="info">设计依据: GB 50217-2018 / GB 50054-2011 | 计算日期: ${now} | design by pc</div>
+
+<h2>1. 负荷参数</h2>
+<table>
+<tr><td>设备功率 P_e</td><td>${r.pe} kW</td></tr>
+<tr><td>需用系数 Kx</td><td>${r.kx}</td></tr>
+<tr><td>功率因数 cosφ</td><td>${r.cosphi}</td></tr>
+<tr><td>相别 / 电压</td><td>${r.labelPhase}</td></tr>
+<tr><td>计算有功 P_js</td><td>${r.pjs.toFixed(2)} kW</td></tr>
+<tr><td>计算无功 Q_js</td><td>${r.qjs.toFixed(2)} kvar</td></tr>
+<tr><td>计算视在 S_js</td><td>${r.sjs.toFixed(2)} kVA</td></tr>
+<tr><td>计算电流 I_js</td><td><b>${r.ijs.toFixed(2)} A</b></td></tr>
+</table>
+
+<h2>2. 电缆选型</h2>
+<table>
+<tr><td>电缆型号</td><td>${r.modelName}</td></tr>
+<tr><td>芯数 / 敷设 / 排列</td><td>${r.coreLabel} / ${r.methodLabel}</td></tr>
+<tr><td>温度修正 Kt</td><td>${r.kT.toFixed(3)}</td></tr>
+<tr><td>敷设修正 Km</td><td>${r.kM.toFixed(3)}</td></tr>
+<tr><td>并列修正 Kg</td><td>${r.kG.toFixed(3)}</td></tr>
+<tr><td>排列修正 Kl</td><td>${r.kLayout.toFixed(2)}</td></tr>
+<tr><td>综合修正 K</td><td>${r.kTotal.toFixed(3)}</td></tr>
+${kpInfo}
+<tr><td>推荐方案</td><td><b>${parallelStr}${r.cs} mm²</b></td></tr>
+<tr><td>单根载流量 / 总载流量</td><td>${r.perCableAmp} A / <b>${r.totalAmp} A</b></td></tr>
+</table>
+
+<h2>3. 压降校验</h2>
+<table>
+<tr><td>电缆长度</td><td>${r.length} m</td></tr>
+<tr><td>单位电阻 R0 / 电抗 X0</td><td>${r.vdR0.toFixed(4)} / ${r.vdX0.toFixed(4)} Ω/km</td></tr>
+<tr><td>压降 ΔU / ΔU%</td><td>${r.vdDU.toFixed(2)} V / <b>${r.vdDUp.toFixed(2)}%</b></td></tr>
+<tr><td>允许限值</td><td>${r.lim}%</td></tr>
+<tr><td>判定</td><td style="color:${r.vdPass?'#0d904f':'#d93025'}">${r.vdPass?'合格':'不合格'}</td></tr>
+</table>
+
+<div class="verdict">最终判定: ${statusBadge}</div>
+${r.allOk ? '<div class="model">推荐型号: '+r.modelName+'-0.6/1kV '+parallelLabel+r.cs+'mm² ('+r.coreLabel+')</div>' : ''}
+
+<div class="signature">
+    <div>计算: ___________</div>
+    <div>审核: ___________</div>
+    <div>日期: ___________</div>
+</div>
+</body></html>`;
+
+    const blob = new Blob(['﻿'+html], {type:'application/msword;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = '电气计算书_'+new Date().toISOString().slice(0,10)+'.doc';
+    a.click(); URL.revokeObjectURL(url);
 }
 
 // ============================================================
@@ -554,7 +650,101 @@ function calcHV() {
     h+='<div class="verdict '+(allOk?'all-pass':'has-fail')+'"><div class="icon">'+(allOk?'PASS':'FAIL')+'</div><div class="msg">'+(allOk?'全部校验通过（含动稳定）':'存在不合格项')+'</div>';
     if(allOk&&cOk){h+='<div class="cable-tag">ZR-YJV-'+vLabel+' '+cs+'mm2 x '+cores+'芯</div>';}
     h+='</div>';
+    h+='<button class="btn btn-primary" style="margin-top:10px;background:#0d904f" onclick="exportWordHV()">导出 Word 计算书</button>';
     $('result-hv').innerHTML=h;$('result-hv').classList.remove('hidden');$('result-hv').scrollIntoView({behavior:'smooth',block:'center'});
+
+    window._hvResult = {pe,kx,cosphi,vLabel,pjs,ijs,
+        conductor,insulation,method:{air:'空气中明敷',buried:'直埋敷设',conduit:'排管敷设'}[method],
+        cores,cs,cRaw, kT,kM,kG,kTotal,required:ijs/kTotal, cOk,
+        length,vdR0,vdX0,vdDUp,vdPass,
+        ik,tSec,scK,smin,scPass,
+        kp,ip,dynR,dynPass,allOk};
+}
+
+function exportWordHV() {
+    const r = window._hvResult;
+    if (!r) return alert('请先完成高压综合计算');
+    const now = new Date().toLocaleString('zh-CN');
+    const s = r.allOk ? '#0d904f' : '#d93025';
+    const b = r.allOk ? '合格' : '不合格';
+    const pass = v => v ? '合格' : '不合格';
+    const pc = v => v ? '#0d904f' : '#d93025';
+
+    const html = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>高压电气计算书</title>
+<style>
+body{font-family:'微软雅黑',SimSun,sans-serif;max-width:700px;margin:0 auto;padding:20px;color:#333;}
+h1{text-align:center;font-size:20px;border-bottom:2px solid #1a73e8;padding-bottom:10px;}
+h2{font-size:15px;color:#1a73e8;border-left:4px solid #1a73e8;padding-left:8px;margin-top:20px;}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px;}
+td{padding:8px;border:1px solid #ddd;}
+td:first-child{background:#f5f7fa;width:35%;font-weight:bold;}
+.info{font-size:12px;color:#888;text-align:center;margin-bottom:15px;}
+.verdict{text-align:center;font-size:16px;font-weight:bold;padding:12px;margin:15px 0;background:#${r.allOk?'e6f4ea':'fce8e6'};color:${s};}
+.model{text-align:center;font-size:14px;font-weight:bold;color:#1a73e8;padding:10px;background:#e8f0fe;margin:10px 0;}
+.signature{margin-top:40px;text-align:right;font-size:13px;}
+.signature div{display:inline-block;margin-left:40px;}
+</style></head><body>
+<h1>高压电气设计计算书</h1>
+<div class="info">设计依据: GB 50217-2018 / GB 50054-2011 | 计算日期: ${now} | design by pc</div>
+
+<h2>1. 负荷参数</h2>
+<table>
+<tr><td>电压等级</td><td>${r.vLabel}</td></tr>
+<tr><td>设备功率 P_e / Kx</td><td>${r.pe} kW / ${r.kx}</td></tr>
+<tr><td>功率因数 cosφ</td><td>${r.cosphi}</td></tr>
+<tr><td>计算有功 P_js</td><td>${r.pjs.toFixed(1)} kW</td></tr>
+<tr><td>计算电流 I_js</td><td><b>${r.ijs.toFixed(2)} A</b></td></tr>
+</table>
+
+<h2>2. 电缆选型</h2>
+<table>
+<tr><td>导体/绝缘</td><td>${r.conductor==='copper'?'铜芯':'铝芯'} / XLPE</td></tr>
+<tr><td>敷设方式</td><td>${r.method}</td></tr>
+<tr><td>芯数</td><td>${r.cores}芯</td></tr>
+<tr><td>温度Kt / 敷设Km / 并列Kg</td><td>${r.kT.toFixed(3)} / ${r.kM.toFixed(3)} / ${r.kG.toFixed(3)}</td></tr>
+<tr><td>综合修正 K</td><td>${r.kTotal.toFixed(3)}</td></tr>
+<tr><td>推荐截面</td><td><b>${r.cs} mm²</b> (基准: ${r.cRaw} A)</td></tr>
+</table>
+
+<h2>3. 压降校验</h2>
+<table>
+<tr><td>电缆长度</td><td>${r.length} m</td></tr>
+<tr><td>R0 / X0</td><td>${r.vdR0.toFixed(4)} / ${r.vdX0.toFixed(4)} Ω/km</td></tr>
+<tr><td>ΔU%</td><td style="color:${pc(r.vdPass)}"><b>${r.vdDUp.toFixed(3)}%</b> (限值 5%)</td></tr>
+<tr><td>判定</td><td style="color:${pc(r.vdPass)}">${pass(r.vdPass)}</td></tr>
+</table>
+
+<h2>4. 热稳定校验</h2>
+<table>
+<tr><td>I\"k3 / t / K</td><td>${r.ik} kA / ${r.tSec} s / ${r.scK}</td></tr>
+<tr><td>S_min</td><td style="color:${pc(r.scPass)}"><b>${r.smin.toFixed(1)} mm²</b></td></tr>
+<tr><td>已选截面 / 判定</td><td>${r.cs} mm² <span style="color:${pc(r.scPass)}">${pass(r.scPass)}</span></td></tr>
+</table>
+
+<h2>5. 动稳定校验</h2>
+<table>
+<tr><td>冲击系数 K_p</td><td>${r.kp}</td></tr>
+<tr><td>峰值电流 i_p</td><td><b>${r.ip.toFixed(1)} kA</b></td></tr>
+<tr><td>电缆允许峰值</td><td>${r.dynR} kA (${r.cs}mm²)</td></tr>
+<tr><td>判定</td><td style="color:${pc(r.dynPass)}">${pass(r.dynPass)}</td></tr>
+</table>
+
+<div class="verdict">最终判定: ${b}</div>
+${r.allOk ? '<div class="model">推荐型号: ZR-YJV-'+r.vLabel+' '+r.cs+'mm² x '+r.cores+'芯</div>' : ''}
+
+<div class="signature">
+    <div>计算: ___________</div>
+    <div>审核: ___________</div>
+    <div>日期: ___________</div>
+</div>
+</body></html>`;
+
+    const blob = new Blob(['﻿'+html], {type:'application/msword;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = '高压电气计算书_'+new Date().toISOString().slice(0,10)+'.doc';
+    a.click(); URL.revokeObjectURL(url);
 }
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
