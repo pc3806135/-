@@ -4,678 +4,445 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#1a73e8">
-    <meta name="description" content="电气设计计算工具 - GB 50217/50054">
     <link rel="manifest" href="manifest.json">
     <title>电气计算工具</title>
     <style>
         :root {
-            --primary: #1a73e8;
-            --primary-dark: #1557b0;
-            --pass: #0d904f;
-            --fail: #d93025;
-            --bg: #f5f7fa;
-            --card: #fff;
-            --text: #202124;
-            --text2: #5f6368;
-            --border: #e0e0e0;
-            --radius: 12px;
-            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+            --primary: #1a73e8; --primary-dark: #1557b0;
+            --pass: #0d904f; --fail: #d93025;
+            --bg: #f0f2f5; --card: #fff; --text: #202124; --text2: #5f6368;
+            --border: #e0e0e0; --radius: 12px; --shadow: 0 1px 4px rgba(0,0,0,0.08);
         }
         * { margin:0; padding:0; box-sizing:border-box; }
-        html { font-size: 16px; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--bg); color: var(--text);
-            max-width: 480px; margin: 0 auto; min-height: 100vh;
+            max-width: 520px; margin: 0 auto; min-height: 100vh;
             -webkit-tap-highlight-color: transparent;
         }
-        /* Header */
         .header {
-            background: var(--primary);
-            color: #fff; padding: 14px 16px; position: sticky; top: 0; z-index: 10;
-            display: flex; align-items: center; justify-content: space-between;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            background: linear-gradient(135deg, #1a73e8, #0d47a1);
+            color: #fff; padding: 16px; text-align: center;
+            position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
-        .header h1 { font-size: 1.1rem; font-weight: 600; }
+        .header h1 { font-size: 1.15rem; font-weight: 700; }
         .header span { font-size: 0.7rem; opacity: 0.85; }
+        .content { padding: 10px; }
 
-        /* Tab Bar */
-        .tab-bar {
-            display: flex; background: var(--card); border-bottom: 1px solid var(--border);
-            position: sticky; top: 50px; z-index: 9; overflow-x: auto;
+        .section-toggle { display: flex; gap: 8px; margin-bottom: 10px; }
+        .section-toggle button {
+            flex:1; padding: 12px; border: none; border-radius: 10px;
+            font-size: 0.95rem; font-weight: 600; cursor: pointer;
+            background: var(--card); color: var(--text);
+            box-shadow: var(--shadow); transition: 0.2s;
         }
-        .tab-bar button {
-            flex: 1; min-width: 60px; padding: 12px 8px; border: none; background: none;
-            font-size: 0.8rem; color: var(--text2); cursor: pointer;
-            border-bottom: 2px solid transparent; white-space: nowrap;
-        }
-        .tab-bar button.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+        .section-toggle button.active { background: var(--primary); color: #fff; }
+        .section { display: none; }
+        .section.active { display: block; }
 
-        /* Main Content */
-        .content { padding: 12px; }
-        .tab-panel { display: none; }
-        .tab-panel.active { display: block; }
+        .card { background: var(--card); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; box-shadow: var(--shadow); }
+        .card h3 { font-size: 0.95rem; margin-bottom: 10px; color: var(--primary); border-left: 3px solid var(--primary); padding-left: 8px; }
 
-        /* Card */
-        .card { background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
-
-        /* Form */
-        .form-group { margin-bottom: 14px; }
-        .form-group:last-child { margin-bottom: 0; }
-        label { display: block; font-size: 0.8rem; color: var(--text2); margin-bottom: 4px; font-weight: 500; }
+        .form-group { margin-bottom: 10px; }
+        label { display: block; font-size: 0.78rem; color: var(--text2); margin-bottom: 3px; font-weight: 500; }
         input, select {
-            width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
-            font-size: 0.95rem; background: #fafafa; color: var(--text);
+            width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px;
+            font-size: 0.9rem; background: #fafafa; color: var(--text);
             -webkit-appearance: none; appearance: none;
         }
         input:focus, select:focus { outline: none; border-color: var(--primary); background: #fff; }
-        .form-row { display: flex; gap: 10px; }
+        .form-row { display: flex; gap: 8px; }
         .form-row > * { flex: 1; }
+        .form-row-3 { display: flex; gap: 8px; }
+        .form-row-3 > * { flex: 1; }
 
-        /* Buttons */
         .btn {
-            width: 100%; padding: 12px; border: none; border-radius: 8px;
-            font-size: 1rem; font-weight: 600; cursor: pointer; transition: 0.2s;
+            width: 100%; padding: 12px; border: none; border-radius: 10px;
+            font-size: 1rem; font-weight: 600; cursor: pointer; transition: 0.2s; margin-top: 8px;
         }
         .btn-primary { background: var(--primary); color: #fff; }
-        .btn-primary:active { background: var(--primary-dark); }
-        .btn-outline { background: #fff; color: var(--primary); border: 1.5px solid var(--primary); margin-top: 8px; }
+        .btn-primary:active { background: var(--primary-dark); transform: scale(0.98); }
 
-        /* Results */
-        .result-table { width: 100%; font-size: 0.85rem; }
-        .result-table td { padding: 8px 4px; border-bottom: 1px solid var(--border); }
-        .result-table td:first-child { color: var(--text2); width: 40%; }
-        .result-table td:last-child { font-weight: 500; text-align: right; }
-        .result-highlight { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
-        .result-pass { color: var(--pass); font-weight: 700; }
-        .result-fail { color: var(--fail); font-weight: 700; }
-        .result-section { margin-bottom: 16px; }
-        .result-section h3 { font-size: 0.9rem; color: var(--primary); margin-bottom: 8px; border-left: 3px solid var(--primary); padding-left: 8px; }
+        .result { margin-top: 10px; }
+        .rtable { width: 100%; font-size: 0.82rem; border-collapse: collapse; }
+        .rtable td { padding: 6px 4px; border-bottom: 1px solid #f0f0f0; }
+        .rtable td:first-child { color: var(--text2); width: 42%; }
+        .rtable td:last-child { font-weight: 500; text-align: right; }
+        .highlight { font-size: 1.05rem; font-weight: 700; color: var(--primary); }
+        .pass { color: var(--pass); font-weight: 700; }
+        .fail { color: var(--fail); font-weight: 700; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 600; }
+        .badge-ok { background: #e6f4ea; color: var(--pass); }
+        .badge-no { background: #fce8e6; color: var(--fail); }
 
-        /* Badges */
-        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
-        .badge-pass { background: #e6f4ea; color: var(--pass); }
-        .badge-fail { background: #fce8e6; color: var(--fail); }
-
-        /* Final Verdict */
-        .verdict { text-align: center; padding: 16px; border-radius: var(--radius); margin-top: 12px; }
-        .verdict.pass { background: #e6f4ea; color: var(--pass); }
-        .verdict.fail { background: #fce8e6; color: var(--fail); }
-        .verdict .icon { font-size: 2rem; }
-        .verdict .msg { font-size: 1rem; font-weight: 700; margin-top: 4px; }
-
-        /* Cable model tag */
-        .cable-model {
+        .verdict { text-align: center; padding: 14px; border-radius: var(--radius); margin-top: 8px; }
+        .verdict.all-pass { background: #e6f4ea; color: var(--pass); }
+        .verdict.has-fail { background: #fce8e6; color: var(--fail); }
+        .verdict .icon { font-size: 1.8rem; }
+        .verdict .msg { font-size: 1rem; font-weight: 700; margin-top: 2px; }
+        .cable-tag {
             display: inline-block; background: #e8f0fe; color: var(--primary);
-            padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 0.9rem;
-            margin-top: 8px;
+            padding: 5px 14px; border-radius: 20px; font-weight: 700; font-size: 0.88rem; margin-top: 6px;
         }
-
         .hidden { display: none; }
-        .info-tip { font-size: 0.75rem; color: var(--text2); margin-top: 4px; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div>
-        <h1>电气设计计算工具</h1>
-        <span>GB 50217 / GB 50054</span>
-    </div>
-    <div style="font-size:1.5rem;">⚡</div>
-</div>
-
-<div class="tab-bar">
-    <button class="active" data-tab="tab-all">综合计算</button>
-    <button data-tab="tab-current">电流</button>
-    <button data-tab="tab-cable">选型</button>
-    <button data-tab="tab-vdrop">压降</button>
-    <button data-tab="tab-sc">短路</button>
+    <h1>电气设计计算工具</h1>
+    <span>GB 50217 / GB 50054 | 工业与民用配电设计手册</span>
 </div>
 
 <div class="content">
-    <!-- ==================== 综合计算 ==================== -->
-    <div id="tab-all" class="tab-panel active">
-        <div class="card">
-            <h3 style="margin-bottom:12px">负荷参数</h3>
-            <div class="form-row">
-                <div class="form-group"><label>设备功率 (kW)</label><input id="a_pe" type="number" value="150" step="any"></div>
-                <div class="form-group"><label>需用系数 Kx</label><input id="a_kx" type="number" value="0.85" step="0.01" min="0" max="1"></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>线电压 (V)</label><select id="a_voltage"><option value="380" selected>380V</option><option value="10000">10kV</option><option value="35000">35kV</option></select></div>
-                <div class="form-group"><label>功率因数 cosφ</label><input id="a_cosphi" type="number" value="0.88" step="0.01" min="0.1" max="1"></div>
-            </div>
-        </div>
-        <div class="card">
-            <h3 style="margin-bottom:12px">电缆参数</h3>
-            <div class="form-row">
-                <div class="form-group"><label>导体材料</label><select id="a_conductor"><option value="copper">铜芯</option><option value="aluminum">铝芯</option></select></div>
-                <div class="form-group"><label>绝缘类型</label><select id="a_insulation"><option value="xlpe">XLPE</option><option value="pvc">PVC</option></select></div>
-            </div>
-            <div class="form-group"><label>敷设方式</label><select id="a_method"><option value="bridge">桥架敷设</option><option value="air">空气中明敷</option><option value="conduit">穿管敷设</option><option value="buried">直埋敷设</option></select></div>
-            <div class="form-row">
-                <div class="form-group"><label>环境温度 (°C)</label><input id="a_temp" type="number" value="35"></div>
-                <div class="form-group"><label>并列回路数</label><input id="a_circuits" type="number" value="2" min="1"></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>电缆长度 (m)</label><input id="a_length" type="number" value="120"></div>
-                <div class="form-group"><label>回路类型</label><select id="a_circuitType"><option value="power">动力 (5%)</option><option value="lighting">照明 (3%)</option><option value="mixed">混合 (4%)</option><option value="emergency">应急 (10%)</option></select></div>
-            </div>
-        </div>
-        <div class="card">
-            <h3 style="margin-bottom:12px">短路参数</h3>
-            <div class="form-row">
-                <div class="form-group"><label>短路电流 I"k3 (kA)</label><input id="a_ik" type="number" value="25" step="any"></div>
-                <div class="form-group"><label>持续时间 t (s)</label><input id="a_t" type="number" value="0.2" step="0.01"></div>
-            </div>
-        </div>
-        <button class="btn btn-primary" onclick="calcAll()">开始综合计算</button>
-        <div id="result-all" class="hidden" style="margin-top:12px;"></div>
+    <div class="section-toggle">
+        <button class="active" onclick="switchSection('lv')">低压 0.6/1kV</button>
+        <button onclick="switchSection('hv')">高压 10/24/35kV</button>
     </div>
 
-    <!-- ==================== 电流计算 ==================== -->
-    <div id="tab-current" class="tab-panel">
+    <!-- ==================== 低压 ==================== -->
+    <div id="section-lv" class="section active">
         <div class="card">
+            <h3>负荷参数</h3>
             <div class="form-row">
-                <div class="form-group"><label>设备功率 (kW)</label><input id="c_pe" type="number" value="100" step="any"></div>
-                <div class="form-group"><label>需用系数 Kx</label><input id="c_kx" type="number" value="0.85" step="0.01"></div>
+                <div class="form-group"><label>设备功率 P_e (kW)</label><input id="lv_pe" type="number" value="150" step="any"></div>
+                <div class="form-group"><label>需用系数 Kx</label><input id="lv_kx" type="number" value="0.85" step="0.01" min="0.1" max="1"></div>
             </div>
             <div class="form-row">
-                <div class="form-group"><label>线电压 (V)</label><select id="c_voltage"><option value="380" selected>380V</option><option value="10000">10kV</option><option value="35000">35kV</option></select></div>
-                <div class="form-group"><label>功率因数 cosφ</label><input id="c_cosphi" type="number" value="0.85" step="0.01"></div>
+                <div class="form-group"><label>功率因数 cosφ</label><input id="lv_cosphi" type="number" value="0.88" step="0.01" min="0.1" max="1"></div>
+                <div class="form-group">
+                    <label>相数 / 电压</label>
+                    <select id="lv_phase">
+                        <option value="3-380">三相 380V</option>
+                        <option value="3-660">三相 660V</option>
+                        <option value="1-220">单相 220V</option>
+                    </select>
+                </div>
             </div>
-            <div class="form-group"><label>相数</label><select id="c_phase"><option value="3">三相</option><option value="1">单相</option></select></div>
         </div>
-        <button class="btn btn-primary" onclick="calcCurrent()">计算电流</button>
-        <div id="result-current" class="hidden" style="margin-top:12px;"></div>
+
+        <div class="card">
+            <h3>电缆参数 <span style="font-size:0.7rem;color:var(--text2)">(工业与民用配电设计手册 第四版)</span></h3>
+            <div class="form-row">
+                <div class="form-group"><label>导体材料</label><select id="lv_conductor"><option value="copper">铜芯</option><option value="aluminum">铝芯</option></select></div>
+                <div class="form-group"><label>绝缘类型</label><select id="lv_insulation"><option value="xlpe">XLPE (交联聚乙烯)</option><option value="pvc">PVC (聚氯乙烯)</option></select></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>敷设方式</label><select id="lv_method"><option value="bridge">桥架敷设</option><option value="air">空气中明敷</option><option value="conduit">穿管敷设</option><option value="buried">直埋敷设</option></select></div>
+                <div class="form-group">
+                    <label>电缆芯数</label>
+                    <select id="lv_cores">
+                        <option value="3">三芯 (3P)</option>
+                        <option value="4" selected>四芯 (3P+N)</option>
+                        <option value="5">五芯 (3P+N+PE)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row-3">
+                <div class="form-group"><label>环境温度 (°C)</label><input id="lv_temp" type="number" value="35"></div>
+                <div class="form-group"><label>并列回路数</label><input id="lv_circuits" type="number" value="2" min="1"></div>
+                <div class="form-group"><label>距离 (m)</label><input id="lv_length" type="number" value="120"></div>
+            </div>
+            <div class="form-group"><label>回路类型</label><select id="lv_ctype"><option value="power">动力 (5%)</option><option value="lighting">照明 (3%)</option><option value="mixed">混合 (4%)</option><option value="emergency">应急 (10%)</option></select></div>
+        </div>
+
+        <div class="card">
+            <h3>短路参数</h3>
+            <div class="form-row">
+                <div class="form-group"><label>短路电流 I"k3 (kA)</label><input id="lv_ik" type="number" value="25" step="any"></div>
+                <div class="form-group"><label>持续时间 t (s)</label><input id="lv_t" type="number" value="0.2" step="0.01"></div>
+            </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="calcLV()">低压综合计算</button>
+        <div id="result-lv" class="result hidden"></div>
     </div>
 
-    <!-- ==================== 电缆选型 ==================== -->
-    <div id="tab-cable" class="tab-panel">
+    <!-- ==================== 高压 ==================== -->
+    <div id="section-hv" class="section">
         <div class="card">
-            <div class="form-group"><label>计算电流 I_js (A)</label><input id="s_ijs" type="number" value="180"></div>
+            <h3>负荷参数</h3>
             <div class="form-row">
-                <div class="form-group"><label>导体材料</label><select id="s_conductor"><option value="copper">铜芯</option><option value="aluminum">铝芯</option></select></div>
-                <div class="form-group"><label>绝缘类型</label><select id="s_insulation"><option value="xlpe">XLPE</option><option value="pvc">PVC</option></select></div>
+                <div class="form-group"><label>设备功率 P_e (kW)</label><input id="hv_pe" type="number" value="5000" step="any"></div>
+                <div class="form-group"><label>需用系数 Kx</label><input id="hv_kx" type="number" value="0.9" step="0.01"></div>
             </div>
-            <div class="form-group"><label>敷设方式</label><select id="s_method"><option value="bridge">桥架敷设</option><option value="air">空气中明敷</option><option value="conduit">穿管敷设</option><option value="buried">直埋敷设</option></select></div>
             <div class="form-row">
-                <div class="form-group"><label>环境温度 (°C)</label><input id="s_temp" type="number" value="35"></div>
-                <div class="form-group"><label>并列回路数</label><input id="s_circuits" type="number" value="1" min="1"></div>
+                <div class="form-group"><label>功率因数 cosφ</label><input id="hv_cosphi" type="number" value="0.9" step="0.01"></div>
+                <div class="form-group">
+                    <label>电压等级</label>
+                    <select id="hv_voltage">
+                        <option value="10000">10kV</option>
+                        <option value="24000">24kV</option>
+                        <option value="35000">35kV</option>
+                    </select>
+                </div>
             </div>
         </div>
-        <button class="btn btn-primary" onclick="calcCable()">电缆选型</button>
-        <div id="result-cable" class="hidden" style="margin-top:12px;"></div>
-    </div>
 
-    <!-- ==================== 压降计算 ==================== -->
-    <div id="tab-vdrop" class="tab-panel">
         <div class="card">
+            <h3>电缆参数</h3>
             <div class="form-row">
-                <div class="form-group"><label>计算电流 (A)</label><input id="v_ijs" type="number" value="180"></div>
-                <div class="form-group"><label>电缆长度 (m)</label><input id="v_length" type="number" value="100"></div>
+                <div class="form-group"><label>导体材料</label><select id="hv_conductor"><option value="copper">铜芯</option><option value="aluminum">铝芯</option></select></div>
+                <div class="form-group"><label>绝缘类型</label><select id="hv_insulation"><option value="xlpe">XLPE</option></select></div>
             </div>
             <div class="form-row">
-                <div class="form-group"><label>电缆截面 (mm²)</label><input id="v_section" type="number" value="70"></div>
-                <div class="form-group"><label>功率因数 cosφ</label><input id="v_cosphi" type="number" value="0.85" step="0.01"></div>
+                <div class="form-group"><label>敷设方式</label><select id="hv_method"><option value="air">空气中明敷</option><option value="buried">直埋敷设</option><option value="conduit">排管敷设</option></select></div>
+                <div class="form-group"><label>电缆芯数</label><select id="hv_cores"><option value="3" selected>三芯</option></select></div>
             </div>
-            <div class="form-row">
-                <div class="form-group"><label>线电压 (V)</label><select id="v_voltage"><option value="380" selected>380V</option><option value="10000">10kV</option></select></div>
-                <div class="form-group"><label>回路类型</label><select id="v_type"><option value="power">动力 (5%)</option><option value="lighting">照明 (3%)</option><option value="mixed">混合 (4%)</option><option value="emergency">应急 (10%)</option></select></div>
+            <div class="form-row-3">
+                <div class="form-group"><label>环境温度 (°C)</label><input id="hv_temp" type="number" value="35"></div>
+                <div class="form-group"><label>并列回路数</label><input id="hv_circuits" type="number" value="1" min="1"></div>
+                <div class="form-group"><label>距离 (m)</label><input id="hv_length" type="number" value="2000"></div>
             </div>
         </div>
-        <button class="btn btn-primary" onclick="calcVDrop()">压降计算</button>
-        <div id="result-vdrop" class="hidden" style="margin-top:12px;"></div>
-    </div>
 
-    <!-- ==================== 短路热稳定 ==================== -->
-    <div id="tab-sc" class="tab-panel">
         <div class="card">
+            <h3>短路参数</h3>
             <div class="form-row">
-                <div class="form-group"><label>短路电流 I"k3 (kA)</label><input id="k_ik" type="number" value="25" step="any"></div>
-                <div class="form-group"><label>持续时间 t (s)</label><input id="k_t" type="number" value="0.2" step="0.01"></div>
+                <div class="form-group"><label>短路电流 I"k3 (kA)</label><input id="hv_ik" type="number" value="16" step="any"></div>
+                <div class="form-group"><label>持续时间 t (s)</label><input id="hv_t" type="number" value="0.5" step="0.01"></div>
             </div>
-            <div class="form-row">
-                <div class="form-group"><label>导体材料</label><select id="k_conductor"><option value="copper">铜芯</option><option value="aluminum">铝芯</option></select></div>
-                <div class="form-group"><label>绝缘类型</label><select id="k_insulation"><option value="xlpe">XLPE</option><option value="pvc">PVC</option></select></div>
+            <div class="form-group"><label>冲击系数 K_p (动稳定)</label>
+                <select id="hv_kp"><option value="1.8" selected>1.8 (一般高压系统)</option><option value="1.9">1.9</option><option value="1.65">1.65</option></select>
             </div>
-            <div class="form-group"><label>已选电缆截面 (mm²)</label><input id="k_section" type="number" value="120"></div>
         </div>
-        <button class="btn btn-primary" onclick="calcSC()">短路校验</button>
-        <div id="result-sc" class="hidden" style="margin-top:12px;"></div>
+
+        <button class="btn btn-primary" onclick="calcHV()">高压综合计算</button>
+        <div id="result-hv" class="result hidden"></div>
     </div>
 </div>
 
 <script>
-// ============================================================
-// 电缆数据库 (GB 50217)
-// ============================================================
-const COPPER_XLPE_BRIDGE_1KV = {1.5:21,2.5:28,4:37,6:47,10:66,16:89,25:118,35:147,50:178,70:228,95:279,120:320,150:370,185:423,240:500,300:577,400:688,500:790,630:910};
-const COPPER_XLPE_AIR_1KV = {1.5:22,2.5:30,4:40,6:51,10:71,16:96,25:127,35:158,50:192,70:246,95:301,120:346,150:399,185:456,240:538,300:621,400:741,500:852,630:981};
-const COPPER_XLPE_CONDUIT_1KV = {1.5:18,2.5:24,4:32,6:41,10:56,16:76,25:100,35:123,50:150,70:188,95:230,120:265,150:305,185:350,240:415,300:475,400:550,500:630,630:720};
-const COPPER_XLPE_BURIED_1KV = {1.5:26,2.5:35,4:46,6:58,10:79,16:103,25:134,35:162,50:194,70:243,95:293,120:335,150:379,185:430,240:502,300:572,400:667,500:760,630:860};
-const COPPER_PVC_AIR_1KV = {1.5:18,2.5:25,4:32,6:42,10:59,16:79,25:105,35:130,50:158,70:204,95:252,120:292,150:337,185:386,240:456,300:527,400:618,500:710,630:815};
-const COPPER_PVC_CONDUIT_1KV = {1.5:15,2.5:20,4:27,6:35,10:48,16:65,25:85,35:105,50:128,70:163,95:200,120:230,150:265,185:304,240:360,300:410,400:470,500:530,630:590};
-const COPPER_PVC_BURIED_1KV = {1.5:22,2.5:30,4:39,6:49,10:67,16:88,25:115,35:140,50:169,70:214,95:260,120:298,150:338,185:385,240:452,300:515,400:590,500:660,630:720};
+function $(id) { return document.getElementById(id); }
+function fv(id) { return parseFloat($(id).value); }
+function badge(ok) { return ok ? '<span class="badge badge-ok">合格</span>' : '<span class="badge badge-no">不合格</span>'; }
 
-// 6/10kV
-const COPPER_XLPE_AIR_10KV = {25:140,35:170,50:205,70:260,95:318,120:367,150:418,185:478,240:563,300:646,400:770,500:882,630:1012};
-const COPPER_XLPE_BURIED_10KV = {25:137,35:165,50:197,70:246,95:296,120:338,150:380,185:432,240:504,300:573,400:667,500:755,630:850};
+function buildCard(title, rows) {
+    let h = '<div class="card"><div class="result-section"><h4>'+title+'</h4><table class="rtable">';
+    for (const [l,v] of rows) h += '<tr><td>'+l+'</td><td>'+v+'</td></tr>';
+    return h + '</table></div></div>';
+}
 
-function al(copperData) {
+function switchSection(s) {
+    document.querySelectorAll('.section-toggle button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(p => p.classList.remove('active'));
+    if (s === 'lv') {
+        document.querySelector('.section-toggle button:first-child').classList.add('active');
+        $('section-lv').classList.add('active');
+    } else {
+        document.querySelector('.section-toggle button:last-child').classList.add('active');
+        $('section-hv').classList.add('active');
+    }
+}
+
+// ============================================================
+// 低压载流量 (GB 50217)
+// ============================================================
+const LV_CU_XLPE = {
+    air: {1.5:22,2.5:30,4:40,6:51,10:71,16:96,25:127,35:158,50:192,70:246,95:301,120:346,150:399,185:456,240:538,300:621,400:741,500:852,630:981},
+    bridge: {1.5:21,2.5:28,4:37,6:47,10:66,16:89,25:118,35:147,50:178,70:228,95:279,120:320,150:370,185:423,240:500,300:577,400:688,500:790,630:910},
+    conduit: {1.5:18,2.5:24,4:32,6:41,10:56,16:76,25:100,35:123,50:150,70:188,95:230,120:265,150:305,185:350,240:415,300:475,400:550,500:630,630:720},
+    buried: {1.5:26,2.5:35,4:46,6:58,10:79,16:103,25:134,35:162,50:194,70:243,95:293,120:335,150:379,185:430,240:502,300:572,400:667,500:760,630:860}
+};
+const LV_CU_PVC = {
+    air: {1.5:18,2.5:25,4:32,6:42,10:59,16:79,25:105,35:130,50:158,70:204,95:252,120:292,150:337,185:386,240:456,300:527,400:618,500:710,630:815},
+    conduit: {1.5:15,2.5:20,4:27,6:35,10:48,16:65,25:85,35:105,50:128,70:163,95:200,120:230,150:265,185:304,240:360,300:410,400:470,500:530,630:590},
+    buried: {1.5:22,2.5:30,4:39,6:49,10:67,16:88,25:115,35:140,50:169,70:214,95:260,120:298,150:338,185:385,240:452,300:515,400:590,500:660,630:720}
+};
+
+function al(d) { const r={}; for(const[k,v] of Object.entries(d)) r[k]=Math.round(v*0.78*10)/10; return r; }
+
+function getLVAmpacity(conductor, insulation, method, cores) {
+    let base;
+    if (insulation === 'xlpe') {
+        const t = LV_CU_XLPE;
+        base = method==='air' ? t.air : (method==='bridge' ? t.bridge : (method==='conduit' ? t.conduit : t.buried));
+    } else {
+        const t = LV_CU_PVC;
+        if (method==='bridge') { base = al(LV_CU_XLPE.bridge); }
+        else { base = method==='air' ? t.air : (method==='conduit' ? t.conduit : t.buried); }
+    }
+    if (conductor === 'aluminum') base = al(base);
+    // 多芯修正 (工业与民用配电设计手册 表9.4)
+    const coreF = {3:1.0, 4:0.88, 5:0.82};
+    const cf = coreF[cores] || 1.0;
     const r = {};
-    for (const [k, v] of Object.entries(copperData)) r[k] = Math.round(v * 0.78 * 10) / 10;
+    for (const [k,v] of Object.entries(base)) r[k] = Math.round(v*cf*10)/10;
     return r;
 }
 
-function getAmpacityTable(conductor, insulation, method, voltageLevel) {
-    if (conductor === 'copper') {
-        if (insulation === 'xlpe') {
-            if (voltageLevel === '6/10kV') {
-                return method === 'buried' ? COPPER_XLPE_BURIED_10KV : COPPER_XLPE_AIR_10KV;
-            }
-            const m = {air: COPPER_XLPE_AIR_1KV, conduit: COPPER_XLPE_CONDUIT_1KV, bridge: COPPER_XLPE_BRIDGE_1KV, buried: COPPER_XLPE_BURIED_1KV};
-            return m[method] || COPPER_XLPE_BRIDGE_1KV;
-        }
-        const m = {air: COPPER_PVC_AIR_1KV, conduit: COPPER_PVC_CONDUIT_1KV, bridge: al(COPPER_PVC_AIR_1KV), buried: COPPER_PVC_BURIED_1KV};
-        return m[method] || COPPER_PVC_AIR_1KV;
-    }
-    // aluminum
-    const cuData = getAmpacityTable('copper', insulation, method, voltageLevel);
-    return al(cuData);
+// 温度修正
+const TP={10:1.22,15:1.17,20:1.12,25:1.06,30:1.00,35:0.94,40:0.87,45:0.79,50:0.71};
+const TX={10:1.18,15:1.14,20:1.10,25:1.05,30:1.00,35:0.95,40:0.90,45:0.85,50:0.80,55:0.74,60:0.68};
+const TBP={10:1.10,15:1.05,20:1.00,25:0.95,30:0.89,35:0.84,40:0.77};
+const TBX={10:1.11,15:1.07,20:1.03,25:0.99,30:0.94,35:0.90,40:0.85};
+
+function interp(t,v) {
+    const k=Object.keys(t).map(Number).sort((a,b)=>a-b);
+    if(v<=k[0])return t[k[0]]; if(v>=k[k.length-1])return t[k[k.length-1]];
+    for(let i=0;i<k.length-1;i++){if(k[i]<=v&&v<=k[i+1]){const r=(v-k[i])/(k[i+1]-k[i]);return t[k[i]]+(t[k[i+1]]-t[k[i]])*r;}}
+    return 1;
 }
+function getTemp(ins,met,t) { return met==='buried'? interp(ins==='xlpe'?TBX:TBP,t) : interp(ins==='xlpe'?TX:TP,t); }
+function getMf(m) { return {air:1, bridge:0.93, conduit:0.80, buried:1.05}[m]||1; }
+const GA={1:1,2:0.87,3:0.81,4:0.75,5:0.70,6:0.66,8:0.60,10:0.55};
+const GB={1:1,2:0.85,3:0.75,4:0.70,5:0.65,6:0.60};
+function getGrp(m,n) { if(n<=1)return 1; const t=m==='buried'?GB:GA; if(n in t)return t[n]; const k=Object.keys(t).map(Number).sort((a,b)=>a-b); if(n>=k[k.length-1])return t[k[k.length-1]]; for(let i=0;i<k.length-1;i++){if(k[i]<=n&&n<=k[i+1])return t[k[i]];} return 1; }
+
+// 低压阻抗
+const ZLC={1.5:[14.80,.110],2.5:[8.88,.106],4:[5.55,.102],6:[3.70,.099],10:[2.246,.098],16:[1.404,.094],25:[.898,.091],35:[.642,.089],50:[.449,.085],70:[.321,.082],95:[.236,.080],120:[.187,.078],150:[.150,.077],185:[.121,.076],240:[.094,.075],300:[.077,.074],400:[.059,.073],500:[.047,.072],630:[.038,.071]};
+const ZLA={1.5:[24.20,.110],2.5:[14.52,.106],4:[9.07,.102],6:[6.05,.099],10:[3.67,.098],16:[2.30,.094],25:[1.47,.091],35:[1.05,.089],50:[.735,.085],70:[.525,.082],95:[.387,.080],120:[.306,.078],150:[.245,.077],185:[.199,.076],240:[.153,.075],300:[.126,.074],400:[.097,.073],500:[.077,.072],630:[.062,.071]};
+
+function zGet(t, s) { const k=Object.keys(t).map(Number).sort((a,b)=>a-b); let b=k[0]; for(const x of k) if(Math.abs(x-s)<Math.abs(b-s)) b=x; return t[b]; }
+
+const KV={copper_pvc:115,copper_xlpe:143,aluminum_pvc:76,aluminum_xlpe:95};
 
 // ============================================================
-// 温度修正系数
+// 高压载流量 (GB 50217)
 // ============================================================
-const TEMP_PVC_AIR = {10:1.22,15:1.17,20:1.12,25:1.06,30:1.00,35:0.94,40:0.87,45:0.79,50:0.71};
-const TEMP_XLPE_AB = {10:1.18,15:1.14,20:1.10,25:1.05,30:1.00,35:0.95,40:0.90,45:0.85,50:0.80,55:0.74,60:0.68};
-const TEMP_BURIED_PVC = {10:1.10,15:1.05,20:1.00,25:0.95,30:0.89,35:0.84,40:0.77};
-const TEMP_BURIED_XLPE = {10:1.11,15:1.07,20:1.03,25:0.99,30:0.94,35:0.90,40:0.85};
+const HC10={air:{25:140,35:170,50:205,70:260,95:318,120:367,150:418,185:478,240:563,300:646,400:770,500:882,630:1012},buried:{25:137,35:165,50:197,70:246,95:296,120:338,150:380,185:432,240:504,300:573,400:667,500:755,630:850}};
+const HC35={air:{50:180,70:228,95:278,120:320,150:365,185:418,240:490,300:560,400:660,500:755,630:860},buried:{50:172,70:215,95:258,120:295,150:334,185:380,240:443,300:504,400:586,500:663,630:745}};
 
-function linearInterp(table, val) {
-    const keys = Object.keys(table).map(Number).sort((a,b)=>a-b);
-    if (val <= keys[0]) return table[keys[0]];
-    if (val >= keys[keys.length-1]) return table[keys[keys.length-1]];
-    for (let i = 0; i < keys.length-1; i++) {
-        if (keys[i] <= val && val <= keys[i+1]) {
-            const t = (val - keys[i]) / (keys[i+1] - keys[i]);
-            return table[keys[i]] + (table[keys[i+1]] - table[keys[i]]) * t;
-        }
-    }
-    return 1.0;
+function getHVAmpacity(conductor, voltage, method) {
+    let b;
+    if (voltage===10000) { b = (method==='buried'||method==='conduit') ? HC10.buried : HC10.air; }
+    else if (voltage===24000) { b = (method==='buried'||method==='conduit') ? HC10.buried : HC10.air; const r={}; for(const[k,v] of Object.entries(b)) r[k]=Math.round(v*0.92*10)/10; b=r; }
+    else { b = (method==='buried'||method==='conduit') ? HC35.buried : HC35.air; }
+    if (conductor==='aluminum') b=al(b);
+    return b;
 }
 
-function getTempCorrection(insulation, method, temp) {
-    if (method === 'buried') {
-        return linearInterp(insulation === 'xlpe' ? TEMP_BURIED_XLPE : TEMP_BURIED_PVC, temp);
-    }
-    return linearInterp(insulation === 'xlpe' ? TEMP_XLPE_AB : TEMP_PVC_AIR, temp);
-}
+// 高压阻抗
+const ZH10={25:[1.20,.130],35:[.868,.125],50:[.641,.120],70:[.459,.116],95:[.338,.112],120:[.268,.109],150:[.214,.106],185:[.174,.103],240:[.135,.100],300:[.110,.098],400:[.085,.095],500:[.068,.093],630:[.055,.091]};
+const ZH35={50:[.641,.130],70:[.459,.126],95:[.338,.122],120:[.268,.118],150:[.214,.115],185:[.174,.112],240:[.135,.108],300:[.110,.105],400:[.085,.102],500:[.068,.100],630:[.055,.098]};
+function zGetHV(v,s) { const t=v===35000?ZH35:ZH10; return zGet(t,s); }
 
-const GROUP_AIR = {1:1.00,2:0.87,3:0.81,4:0.75,5:0.70,6:0.66,8:0.60,10:0.55};
-const GROUP_BURIED = {1:1.00,2:0.85,3:0.75,4:0.70,5:0.65,6:0.60};
+// 动稳定允许峰值 (kA)
+const DC={25:16,35:22,50:30,70:40,95:55,120:65,150:80,185:100,240:125,300:155,400:195,500:240,630:290};
+const DA={25:10,35:14,50:19,70:25,95:35,120:42,150:52,185:65,240:80,300:100,400:126,500:155,630:188};
+function dynRating(con,s) { return zGet(con==='copper'?DC:DA, s); }
 
-function getGroupingCorrection(method, n) {
-    if (n <= 1) return 1.0;
-    const table = method === 'buried' ? GROUP_BURIED : GROUP_AIR;
-    if (n in table) return table[n];
-    const keys = Object.keys(table).map(Number).sort((a,b)=>a-b);
-    if (n >= keys[keys.length-1]) return table[keys[keys.length-1]];
-    for (let i = 0; i < keys.length-1; i++) {
-        if (keys[i] <= n && n <= keys[i+1]) return table[keys[i]]; // conservative
-    }
-    return 1.0;
-}
-
-function getMethodFactor(method) {
-    return {air:1.0, bridge:0.93, conduit:0.80, buried:1.05}[method] || 1.0;
-}
+function peakCurrent(ik,kp) { return Math.sqrt(2)*kp*ik; }
 
 // ============================================================
-// 阻抗数据
+// 低压综合计算
 // ============================================================
-const Z_COPPER_1KV = {1.5:[14.80,0.110],2.5:[8.880,0.106],4:[5.550,0.102],6:[3.700,0.099],10:[2.246,0.098],16:[1.404,0.094],25:[0.898,0.091],35:[0.642,0.089],50:[0.449,0.085],70:[0.321,0.082],95:[0.236,0.080],120:[0.187,0.078],150:[0.150,0.077],185:[0.121,0.076],240:[0.094,0.075],300:[0.077,0.074],400:[0.059,0.073],500:[0.047,0.072],630:[0.038,0.071]};
-const Z_AL_1KV = {1.5:[24.20,0.110],2.5:[14.52,0.106],4:[9.070,0.102],6:[6.050,0.099],10:[3.670,0.098],16:[2.300,0.094],25:[1.470,0.091],35:[1.050,0.089],50:[0.735,0.085],70:[0.525,0.082],95:[0.387,0.080],120:[0.306,0.078],150:[0.245,0.077],185:[0.199,0.076],240:[0.153,0.075],300:[0.126,0.074],400:[0.097,0.073],500:[0.077,0.072],630:[0.062,0.071]};
-const Z_COPPER_10KV = {25:[0.898,0.120],35:[0.642,0.115],50:[0.449,0.110],70:[0.321,0.106],95:[0.236,0.103],120:[0.187,0.100],150:[0.150,0.098],185:[0.121,0.096],240:[0.094,0.094],300:[0.077,0.092],400:[0.059,0.090],500:[0.047,0.089],630:[0.038,0.088]};
-const Z_AL_10KV = {25:[1.470,0.120],35:[1.050,0.115],50:[0.735,0.110],70:[0.525,0.106],95:[0.387,0.103],120:[0.306,0.100],150:[0.245,0.098],185:[0.199,0.096],240:[0.153,0.094],300:[0.126,0.092],400:[0.097,0.090],500:[0.077,0.089],630:[0.062,0.088]};
+function calcLV() {
+    const pe=fv('lv_pe'), kx=fv('lv_kx'), cosphi=fv('lv_cosphi');
+    const [ph,vstr]=$('lv_phase').value.split('-');
+    const is3=ph==='3', V=parseFloat(vstr);
+    const conductor=$('lv_conductor').value, insulation=$('lv_insulation').value;
+    const method=$('lv_method').value, cores=parseInt($('lv_cores').value);
+    const temp=fv('lv_temp'), circuits=fv('lv_circuits'), length=fv('lv_length');
+    const ctype=$('lv_ctype').value, ik=fv('lv_ik'), tSec=fv('lv_t');
 
-function getImpedance(conductor, voltageLevel, section) {
-    let table;
-    if (voltageLevel === '6/10kV' || voltageLevel === '10kV') {
-        table = conductor === 'copper' ? Z_COPPER_10KV : Z_AL_10KV;
+    const pjs=pe*kx;
+    let ijs, labelPhase;
+    if(is3) {
+        ijs=pjs*1000/(Math.sqrt(3)*V*cosphi);
+        labelPhase='三相 '+V+'V';
     } else {
-        table = conductor === 'copper' ? Z_COPPER_1KV : Z_AL_1KV;
+        ijs=pjs*1000/(V*cosphi);
+        labelPhase='单相 '+V+'V';
     }
-    const keys = Object.keys(table).map(Number).sort((a,b)=>a-b);
-    let best = keys[0];
-    for (const k of keys) { if (Math.abs(k - section) < Math.abs(best - section)) best = k; }
-    return table[best];
-}
-
-// ============================================================
-// K 值 (短路热稳定)
-// ============================================================
-const K_VALUES = {
-    'copper_pvc': 115, 'copper_xlpe': 143,
-    'aluminum_pvc': 76, 'aluminum_xlpe': 95,
-};
-
-// ============================================================
-// 计算函数
-// ============================================================
-function calcIjs(pe, kx, cosphi, voltage, isThreePhase) {
-    const pjs = pe * kx;
-    if (isThreePhase) return pjs * 1000 / (Math.sqrt(3) * voltage * cosphi);
-    return pjs * 1000 / ((voltage / Math.sqrt(3)) * cosphi);
-}
-
-function selectCable(ijs, conductor, insulation, method, voltageLevel, ambientTemp, numCircuits) {
-    const table = getAmpacityTable(conductor, insulation, method, voltageLevel);
-    const kTemp = getTempCorrection(insulation, method, ambientTemp);
-    const kMethod = getMethodFactor(method);
-    const kGroup = getGroupingCorrection(method, numCircuits);
-    const kTotal = kTemp * kMethod * kGroup;
-
-    const required = ijs / kTotal;
-    const sections = Object.keys(table).map(Number).sort((a,b)=>a-b);
-
-    let selected = null;
-    for (const s of sections) { if (table[s] >= required) { selected = s; break; } }
-
-    if (!selected) {
-        const maxS = sections[sections.length-1];
-        return {valid: false, failReason: `最大截面 ${maxS}mm² 仍不满足要求电流 ${required.toFixed(1)}A`, factors: {kTemp, kMethod, kGroup, kTotal, required}};
-    }
-
-    return {
-        valid: true, section: selected,
-        rawAmpacity: table[selected],
-        correctedAmpacity: table[selected] * kTotal,
-        factors: {kTemp, kMethod, kGroup, kTotal, required},
-    };
-}
-
-function calcVDrop3ph(ijs, length, section, conductor, voltageLevel, voltage, cosphi) {
-    const [r0, x0] = getImpedance(conductor, voltageLevel || '0.6/1kV', section);
-    const sinphi = Math.sin(Math.acos(cosphi));
-    const dU = Math.sqrt(3) * ijs * length * (r0 * cosphi + x0 * sinphi) / 1000;
-    const dUp = dU / voltage * 100;
-    return {dU, dUp, r0, x0};
-}
-
-function calcMinSection(ikA, tSec, conductor, insulation) {
-    const k = K_VALUES[`${conductor}_${insulation}`];
-    return ikA * Math.sqrt(tSec) / k;
-}
-
-function getVDLimit(circuitType) {
-    return {lighting:3, power:5, mixed:4, emergency:10}[circuitType] || 5;
-}
-
-// ============================================================
-// UI 渲染
-// ============================================================
-function renderResult(containerId, html) {
-    const el = document.getElementById(containerId);
-    el.innerHTML = html;
-    el.classList.remove('hidden');
-    el.scrollIntoView({behavior:'smooth', block:'center'});
-}
-
-function badge(pass) {
-    return pass ? '<span class="badge badge-pass">合格</span>' : '<span class="badge badge-fail">不合格</span>';
-}
-
-function row(label, value) {
-    return `<tr><td>${label}</td><td>${value}</td></tr>`;
-}
-
-function buildSection(title, rows) {
-    let html = `<div class="result-section card"><h3>${title}</h3><table class="result-table">`;
-    for (const [l, v] of rows) html += row(l, v);
-    html += '</table></div>';
-    return html;
-}
-
-// ============================================================
-// 综合计算
-// ============================================================
-function calcAll() {
-    const pe = parseFloat(document.getElementById('a_pe').value);
-    const kx = parseFloat(document.getElementById('a_kx').value);
-    const voltage = parseFloat(document.getElementById('a_voltage').value);
-    const cosphi = parseFloat(document.getElementById('a_cosphi').value);
-    const conductor = document.getElementById('a_conductor').value;
-    const insulation = document.getElementById('a_insulation').value;
-    const method = document.getElementById('a_method').value;
-    const ambientTemp = parseFloat(document.getElementById('a_temp').value);
-    const numCircuits = parseInt(document.getElementById('a_circuits').value);
-    const length = parseFloat(document.getElementById('a_length').value);
-    const circuitType = document.getElementById('a_circuitType').value;
-    const ik = parseFloat(document.getElementById('a_ik').value);
-    const tSec = parseFloat(document.getElementById('a_t').value);
-
-    const voltageLevel = voltage <= 1000 ? '0.6/1kV' : (voltage <= 10000 ? '6/10kV' : '35kV');
-
-    // 1. Current
-    const ijs = calcIjs(pe, kx, cosphi, voltage, true);
-    const pjs = pe * kx;
-    const qjs = pjs * Math.tan(Math.acos(cosphi));
-    const sjs = pjs / cosphi;
-
-    // 2. Cable
-    const cable = selectCable(ijs, conductor, insulation, method, voltageLevel, ambientTemp, numCircuits);
-
-    // 3. Voltage Drop
-    let vd = null;
-    if (cable.valid) {
-        vd = calcVDrop3ph(ijs, length, cable.section, conductor, voltageLevel, voltage, cosphi);
-    }
-
-    // 4. Short Circuit
-    const sectionForSc = cable.valid ? cable.section : 0;
-    const smin = calcMinSection(ik * 1000, tSec, conductor, insulation);
-    const scPass = sectionForSc >= smin;
-
-    // Build result
-    let html = '';
-
-    // Current
-    html += buildSection('1. 电流计算 (GB 50054)', [
-        ['相别', '三相'],
-        ['线电压', voltage + ' V'],
-        ['功率因数', cosphi.toFixed(2)],
-        ['有功功率 P_js', pjs.toFixed(2) + ' kW'],
-        ['无功功率 Q_js', qjs.toFixed(2) + ' kvar'],
-        ['视在功率 S_js', sjs.toFixed(2) + ' kVA'],
-        ['计算电流 I_js', `<span class="result-highlight">${ijs.toFixed(2)} A</span>`],
-    ]);
+    const qjs=pjs*Math.tan(Math.acos(cosphi)), sjs=pjs/cosphi;
 
     // Cable
-    if (cable.valid) {
-        const f = cable.factors;
-        html += buildSection('2. 电缆选型 (GB 50217)', [
-            ['导体/绝缘', `${conductor==='copper'?'铜芯':'铝芯'} ${insulation.toUpperCase()}`],
-            ['敷设方式', {air:'空气中明敷',bridge:'桥架敷设',conduit:'穿管敷设',buried:'直埋敷设'}[method]],
-            ['温度修正 Kt', f.kTemp.toFixed(3)],
-            ['敷设修正 Km', f.kMethod.toFixed(3)],
-            ['并列修正 Kg', f.kGroup.toFixed(3)],
-            ['综合修正 K', f.kTotal.toFixed(3)],
-            ['要求载流量', f.required.toFixed(1) + ' A'],
-            ['推荐截面', `<span class="result-highlight">${cable.section} mm²</span>`],
-            ['修正后载流量', cable.correctedAmpacity.toFixed(0) + ' A ' + badge(true)],
-        ]);
-    } else {
-        html += buildSection('2. 电缆选型 (GB 50217)', [
-            ['选型结果', `<span class="result-fail">失败</span>`],
-            ['原因', cable.failReason],
-        ]);
-    }
+    const ampTable=getLVAmpacity(conductor,insulation,method,cores);
+    const kT=getTemp(insulation,method,temp), kM=getMf(method), kG=getGrp(method,circuits);
+    const kTotal=kT*kM*kG, required=ijs/kTotal;
+    let cs=0,cRaw=0,cOk=false,cFail='';
+    const secs=Object.keys(ampTable).map(Number).sort((a,b)=>a-b);
+    for(const s of secs){if(ampTable[s]>=required){cs=s;cRaw=ampTable[s];cOk=true;break;}}
+    if(!cOk){const ms=secs[secs.length-1];cFail='最大截面 '+ms+'mm2 仍不满足 ('+required.toFixed(1)+'A)';}
 
     // VD
-    if (vd) {
-        const limit = getVDLimit(circuitType);
-        const vdPass = vd.dUp <= limit;
-        html += buildSection('3. 压降校验 (GB 50054 §6.4)', [
-            ['电缆长度', length + ' m'],
-            ['电缆截面', cable.section + ' mm²'],
-            ['R0 / X0', `${vd.r0.toFixed(4)} / ${vd.x0.toFixed(4)} Ω/km`],
-            ['压降 ΔU', vd.dU.toFixed(2) + ' V'],
-            ['压降百分比', `<span class="${vdPass?'result-pass':'result-fail'}">${vd.dUp.toFixed(2)}%</span>`],
-            ['允许限值', limit.toFixed(0) + '% (' + circuitType + ')'],
-            ['判定', badge(vdPass)],
-        ]);
+    let vdDU=0,vdDUp=0,vdR0=0,vdX0=0,vdPass=false;
+    if(cOk){
+        const [r0,x0]=zGet(conductor==='copper'?ZLC:ZLA, cs);
+        vdR0=r0;vdX0=x0;
+        const sp=Math.sin(Math.acos(cosphi));
+        vdDU=is3? (Math.sqrt(3)*ijs*length*(r0*cosphi+x0*sp)/1000) : (2*ijs*length*(r0*cosphi+x0*sp)/1000);
+        vdDUp=is3? (vdDU/V*100) : (vdDU/V*100);
+        const lim={lighting:3,power:5,mixed:4,emergency:10}[ctype]||5;
+        vdPass=vdDUp<=lim;
     }
 
     // SC
-    html += buildSection('4. 短路热稳定校验 (GB 50054 §6.2.3)', [
-        ['I\"k3', ik + ' kA'],
-        ['持续时间 t', tSec + ' s'],
-        ['热稳定系数 K', K_VALUES[`${conductor}_${insulation}`].toString()],
-        ['S_min', `<span class="${scPass?'result-pass':'result-fail'}">${smin.toFixed(1)} mm²</span>`],
-        ['已选截面', sectionForSc + ' mm²'],
-        ['判定', badge(scPass) + (scPass ? '' : ` 需 >= ${Math.ceil(smin)} mm²`)],
-    ]);
+    let smin=0,scPass=false,scK=0;
+    if(cOk){scK=KV[conductor+'_'+insulation];smin=(ik*1000)*Math.sqrt(tSec)/scK;scPass=cs>=smin;}
 
-    // Verdict
-    const allPass = cable.valid && vd && vd.dUp <= getVDLimit(circuitType) && scPass;
-    html += `<div class="verdict ${allPass?'pass':'fail'}">`;
-    html += `<div class="icon">${allPass?'&#9989;':'&#10060;'}</div>`;
-    html += `<div class="msg">${allPass?'全部校验通过，电缆选型满足规范要求':'存在不合格项，请调整参数'}</div>`;
-
-    if (cable.valid && vd && vd.dUp <= getVDLimit(circuitType) && scPass) {
-        const model = `${conductor==='copper'?'ZR-YJV':'ZR-YJLV'}-${voltageLevel} 3x${cable.section}+1x${Math.max(Math.round(cable.section/2), 10)}`;
-        html += `<div class="cable-model">${model}</div>`;
-    }
-
-    html += '</div>';
-
-    renderResult('result-all', html);
+    // Render
+    const coreLabel={3:'三芯 (3P)',4:'四芯 (3P+N)',5:'五芯 (3P+N+PE)'}[cores];
+    const lim={lighting:3,power:5,mixed:4,emergency:10}[ctype]||5;
+    let h='';
+    h+=buildCard('1. 电流计算',[['相别/电压',labelPhase],['功率因数',cosphi.toFixed(2)],['P_js / Q_js / S_js',pjs.toFixed(1)+' kW / '+qjs.toFixed(1)+' kvar / '+sjs.toFixed(1)+' kVA'],['计算电流 I_js','<span class="highlight">'+ijs.toFixed(2)+' A</span>']]);
+    if(cOk){
+        h+=buildCard('2. 电缆选型 ('+coreLabel+')',[['导体/绝缘',(conductor==='copper'?'铜芯':'铝芯')+' / '+insulation.toUpperCase()],['敷设方式',{air:'空气中明敷',bridge:'桥架敷设',conduit:'穿管敷设',buried:'直埋敷设'}[method]],['温度Kt / 敷设Km / 并列Kg',kT.toFixed(3)+' / '+kM.toFixed(3)+' / '+kG.toFixed(3)],['综合K / 要求载流量',kTotal.toFixed(3)+' / '+required.toFixed(1)+' A'],['推荐截面','<span class="highlight">'+cs+' mm2</span> (修正后: '+Math.round(cRaw*kTotal)+' A)']]);
+    }else{h+=buildCard('2. 电缆选型',[['结果','<span class="fail">失败</span>'],['原因',cFail]]);}
+    if(cOk){h+=buildCard('3. 压降 (限值 '+lim+'%)',[['R0/X0',vdR0.toFixed(4)+' / '+vdX0.toFixed(4)+' ohm/km'],['dU / dU%',vdDU.toFixed(2)+' V / <span class="'+(vdPass?'pass':'fail')+'">'+vdDUp.toFixed(2)+'%</span>'],['判定',badge(vdPass)]]);}
+    if(cOk){h+=buildCard('4. 短路热稳定',[['I\"k3 / t',ik+' kA / '+tSec+' s | K='+scK],['S_min','<span class="'+(scPass?'pass':'fail')+'">'+smin.toFixed(1)+' mm2</span>'],['已选截面',cs+' mm2 '+badge(scPass)]]);}
+    const allOk=cOk&&vdPass&&scPass;
+    h+='<div class="verdict '+(allOk?'all-pass':'has-fail')+'"><div class="icon">'+(allOk?'PASS':'FAIL')+'</div><div class="msg">'+(allOk?'全部校验通过':'存在不合格项')+'</div>';
+    if(allOk&&cOk){const n=Math.max(Math.round(cs/2),cores>=4?16:10);h+='<div class="cable-tag">'+(conductor==='copper'?'ZR-YJV':'ZR-YJLV')+'-0.6/1kV '+cs+'mm2 x '+cores+'芯</div>';}
+    h+='</div>';
+    $('result-lv').innerHTML=h;$('result-lv').classList.remove('hidden');$('result-lv').scrollIntoView({behavior:'smooth',block:'center'});
 }
 
 // ============================================================
-// 单项计算
+// 高压综合计算
 // ============================================================
-function calcCurrent() {
-    const pe = parseFloat(document.getElementById('c_pe').value);
-    const kx = parseFloat(document.getElementById('c_kx').value);
-    const voltage = parseFloat(document.getElementById('c_voltage').value);
-    const cosphi = parseFloat(document.getElementById('c_cosphi').value);
-    const is3ph = document.getElementById('c_phase').value === '3';
+function calcHV() {
+    const pe=fv('hv_pe'), kx=fv('hv_kx'), cosphi=fv('hv_cosphi'), voltage=fv('hv_voltage');
+    const conductor=$('hv_conductor').value, insulation=$('hv_insulation').value;
+    const method=$('hv_method').value, cores=parseInt($('hv_cores').value);
+    const temp=fv('hv_temp'), circuits=fv('hv_circuits'), length=fv('hv_length');
+    const ik=fv('hv_ik'), tSec=fv('hv_t'), kp=fv('hv_kp');
 
-    const ijs = calcIjs(pe, kx, cosphi, voltage, is3ph);
-    const pjs = pe * kx;
+    const pjs=pe*kx;
+    const ijs=pjs*1000/(Math.sqrt(3)*voltage*cosphi);
+    const vLabel=(voltage/1000).toFixed(0)+'kV';
 
-    let html = buildSection('电流计算结果', [
-        ['相别', is3ph ? '三相' : '单相'],
-        ['线电压', voltage + ' V'],
-        ['功率因数', cosphi.toFixed(2)],
-        ['计算有功 P_js', pjs.toFixed(2) + ' kW'],
-        ['计算电流 I_js', `<span class="result-highlight">${ijs.toFixed(2)} A</span>`],
-    ]);
-    renderResult('result-current', html);
+    // Cable
+    const ampTable=getHVAmpacity(conductor,voltage,method);
+    const kT=getTemp(insulation,method,temp);
+    const kM=method==='conduit'?0.85:(method==='buried'?1.05:1.0);
+    const kG=getGrp(method,circuits);
+    const kTotal=kT*kM*kG, required=ijs/kTotal;
+    let cs=0,cRaw=0,cOk=false,cFail='';
+    const secs=Object.keys(ampTable).map(Number).sort((a,b)=>a-b);
+    for(const s of secs){if(ampTable[s]>=required){cs=s;cRaw=ampTable[s];cOk=true;break;}}
+    if(!cOk){const ms=secs[secs.length-1];cFail='最大截面 '+ms+'mm2 不满足 ('+required.toFixed(1)+'A)';}
+
+    // VD
+    let vdDU=0,vdDUp=0,vdR0=0,vdX0=0,vdPass=false;
+    if(cOk){const[r0,x0]=zGetHV(voltage,cs);vdR0=r0;vdX0=x0;const sp=Math.sin(Math.acos(cosphi));vdDU=Math.sqrt(3)*ijs*length*(r0*cosphi+x0*sp)/1000;vdDUp=vdDU/voltage*100;vdPass=vdDUp<=5;}
+
+    // Thermal
+    let smin=0,scPass=false,scK=0;
+    if(cOk){scK=KV[conductor+'_'+insulation];smin=(ik*1000)*Math.sqrt(tSec)/scK;scPass=cs>=smin;}
+
+    // Dynamic
+    const ip=peakCurrent(ik,kp);
+    let dynR=0,dynPass=false;
+    if(cOk){dynR=dynRating(conductor,cs);dynPass=ip<=dynR;}
+
+    // Render
+    let h='';
+    h+=buildCard('1. 高压电流计算',[['电压等级',vLabel],['功率因数',cosphi.toFixed(2)],['P_js',pjs.toFixed(1)+' kW'],['计算电流 I_js','<span class="highlight">'+ijs.toFixed(2)+' A</span>']]);
+    if(cOk){h+=buildCard('2. 高压电缆选型',[['型号','ZR-YJV-'+vLabel+' '+cs+'mm2 '+cores+'芯 ('+(conductor==='copper'?'铜芯':'铝芯')+')'],['敷设方式',{air:'空气中明敷',buried:'直埋敷设',conduit:'排管敷设'}[method]||method],['综合K / 要求载流量',kTotal.toFixed(3)+' / '+required.toFixed(1)+' A'],['推荐截面','<span class="highlight">'+cs+' mm2</span> (基准: '+cRaw+' A)']]);}
+    else{h+=buildCard('2. 高压电缆选型',[['结果','<span class="fail">失败</span>'],['原因',cFail]]);}
+    if(cOk){h+=buildCard('3. 压降 (限值 5%)',[['R0/X0',vdR0.toFixed(4)+' / '+vdX0.toFixed(4)+' ohm/km'],['dU%','<span class="'+(vdPass?'pass':'fail')+'">'+vdDUp.toFixed(3)+'%</span>'],['判定',badge(vdPass)]]);}
+    if(cOk){h+=buildCard('4. 热稳定校验',[['I\"k3 / t / K',ik+' kA / '+tSec+' s / '+scK],['S_min','<span class="'+(scPass?'pass':'fail')+'">'+smin.toFixed(1)+' mm2</span>'],['已选截面',cs+' mm2 '+badge(scPass)]]);}
+    if(cOk){h+=buildCard('5. 动稳定校验',[['冲击系数 K_p',kp.toFixed(1)],['峰值电流 i_p','<span class="highlight">'+ip.toFixed(1)+' kA</span>'],['电缆允许峰值',dynR+' kA ('+cs+'mm2)'],['判定',badge(dynPass)+(dynPass?'':' 需升级截面')]]);}
+    const allOk=cOk&&vdPass&&scPass&&dynPass;
+    h+='<div class="verdict '+(allOk?'all-pass':'has-fail')+'"><div class="icon">'+(allOk?'PASS':'FAIL')+'</div><div class="msg">'+(allOk?'全部校验通过（含动稳定）':'存在不合格项')+'</div>';
+    if(allOk&&cOk){h+='<div class="cable-tag">ZR-YJV-'+vLabel+' '+cs+'mm2 x '+cores+'芯</div>';}
+    h+='</div>';
+    $('result-hv').innerHTML=h;$('result-hv').classList.remove('hidden');$('result-hv').scrollIntoView({behavior:'smooth',block:'center'});
 }
 
-function calcCable() {
-    const ijs = parseFloat(document.getElementById('s_ijs').value);
-    const conductor = document.getElementById('s_conductor').value;
-    const insulation = document.getElementById('s_insulation').value;
-    const method = document.getElementById('s_method').value;
-    const ambientTemp = parseFloat(document.getElementById('s_temp').value);
-    const numCircuits = parseInt(document.getElementById('s_circuits').value);
-
-    const cable = selectCable(ijs, conductor, insulation, method, '0.6/1kV', ambientTemp, numCircuits);
-
-    if (!cable.valid) {
-        renderResult('result-cable', `<div class="card"><span class="result-fail">选型失败: ${cable.failReason}</span></div>`);
-        return;
-    }
-
-    const f = cable.factors;
-    let html = buildSection('电缆选型结果', [
-        ['导体材料', conductor==='copper'?'铜芯':'铝芯'],
-        ['绝缘类型', insulation.toUpperCase()],
-        ['敷设方式', {air:'空气中明敷',bridge:'桥架敷设',conduit:'穿管敷设',buried:'直埋敷设'}[method]],
-        ['温度修正 Kt', f.kTemp.toFixed(3)],
-        ['敷设修正 Km', f.kMethod.toFixed(3)],
-        ['并列修正 Kg', f.kGroup.toFixed(3)],
-        ['综合修正 K', f.kTotal.toFixed(3)],
-        ['要求载流量', f.required.toFixed(1) + ' A'],
-        ['推荐截面', `<span class="result-highlight">${cable.section} mm²</span>`],
-        ['基准载流量', cable.rawAmpacity + ' A'],
-        ['修正后载流量', cable.correctedAmpacity.toFixed(0) + ' A'],
-    ]);
-    renderResult('result-cable', html);
-}
-
-function calcVDrop() {
-    const ijs = parseFloat(document.getElementById('v_ijs').value);
-    const length = parseFloat(document.getElementById('v_length').value);
-    const section = parseFloat(document.getElementById('v_section').value);
-    const cosphi = parseFloat(document.getElementById('v_cosphi').value);
-    const voltage = parseFloat(document.getElementById('v_voltage').value);
-    const circuitType = document.getElementById('v_type').value;
-
-    const vl = voltage <= 1000 ? '0.6/1kV' : '6/10kV';
-    const vd = calcVDrop3ph(ijs, length, section, 'copper', vl, voltage, cosphi);
-    const limit = getVDLimit(circuitType);
-    const pass = vd.dUp <= limit;
-
-    let html = buildSection('压降计算结果', [
-        ['回路类型', circuitType],
-        ['电缆长度', length + ' m'],
-        ['电缆截面', section + ' mm²'],
-        ['R0 / X0', `${vd.r0.toFixed(4)} / ${vd.x0.toFixed(4)} Ω/km`],
-        ['压降 ΔU', vd.dU.toFixed(2) + ' V'],
-        ['压降百分比', `<span class="${pass?'result-pass':'result-fail'}">${vd.dUp.toFixed(2)}%</span>`],
-        ['允许限值', limit + '%'],
-        ['判定', badge(pass)],
-    ]);
-    renderResult('result-vdrop', html);
-}
-
-function calcSC() {
-    const ik = parseFloat(document.getElementById('k_ik').value);
-    const tSec = parseFloat(document.getElementById('k_t').value);
-    const conductor = document.getElementById('k_conductor').value;
-    const insulation = document.getElementById('k_insulation').value;
-    const section = parseFloat(document.getElementById('k_section').value);
-
-    const smin = calcMinSection(ik * 1000, tSec, conductor, insulation);
-    const pass = section >= smin;
-
-    let html = buildSection('短路热稳定校验结果', [
-        ['I\"k3', ik + ' kA (' + (ik*1000).toFixed(0) + ' A)'],
-        ['持续时间 t', tSec + ' s'],
-        ['热稳定系数 K', K_VALUES[`${conductor}_${insulation}`].toString()],
-        ['要求最小截面 S_min', `<span class="${pass?'result-pass':'result-fail'}">${smin.toFixed(1)} mm²</span>`],
-        ['已选截面', section + ' mm²'],
-        ['判定', badge(pass) + (pass ? '' : ` 需升级到 >= ${Math.ceil(smin)} mm²`)],
-    ]);
-    renderResult('result-sc', html);
-}
-
-// ============================================================
-// Service Worker (PWA)
-// ============================================================
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js');
-}
-
-// ============================================================
-// Tab 切换
-// ============================================================
-document.querySelectorAll('.tab-bar button').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-bar button').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById(btn.dataset.tab).classList.add('active');
-    });
-});
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
 </script>
-
 </body>
 </html>
