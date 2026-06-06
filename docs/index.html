@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#1a73e8">
     <meta name="description" content="电气设计计算工具 - GB 50217/50054">
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="manifest.json">
     <title>电气计算工具</title>
     <style>
         :root {
@@ -661,7 +661,7 @@ function calcSC() {
 // Service Worker (PWA)
 // ============================================================
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js');
+    navigator.serviceWorker.register('./sw.js');
 }
 
 // ============================================================

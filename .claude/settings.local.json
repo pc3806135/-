@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c ' *)",
+      "Bash(python \"E:\\\\桌面\\\\测试项目\\\\run_tests.py\")",
+      "Bash(git init *)",
+      "Bash(git config *)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'feat: 电气设计计算工具 v1.0 *)",
+      "Bash(git remote *)",
+      "Bash(git push *)",
+      "Bash(python -c \"import sys; sys.path.insert\\(0, '.'\\); from server import ensure_icons; ensure_icons\\(\\)\")",
+      "Bash(ls -la icon-*.png)",
+      "Bash(node -e ' *)",
+      "Bash(python server.py)",
+      "Bash(curl -s http://localhost:8080/)",
+      "Bash(curl -s http://localhost:8080/manifest.json)",
+      "Bash(curl -s http://localhost:8080/sw.js)",
+      "Bash(kill %1)",
+      "Bash(cp -r pwa docs)",
+      "Bash(git rm *)",
+      "Bash(rm -rf docs/pwa pwa)",
+      "Bash(git commit -m 'refactor: 移动 pwa/ -> docs/ 用于 GitHub Pages 部署 *)"
+    ]
+  }
+}

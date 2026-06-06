@@ -1,10 +1,10 @@
 // Service Worker for PWA offline support
 const CACHE_NAME = 'elec-calc-v1';
 const ASSETS = [
-    '/index.html',
-    '/manifest.json',
-    '/icon-192.png',
-    '/icon-512.png',
+    'index.html',
+    'manifest.json',
+    'icon-192.png',
+    'icon-512.png',
 ];
 
 self.addEventListener('install', (event) => {
@@ -40,7 +40,7 @@ self.addEventListener('fetch', (event) => {
             }).catch(() => {
                 // Offline fallback - return cached index.html for navigation
                 if (event.request.mode === 'navigate') {
-                    return caches.match('/index.html');
+                    return caches.match('index.html');
                 }
                 return null;
             });
